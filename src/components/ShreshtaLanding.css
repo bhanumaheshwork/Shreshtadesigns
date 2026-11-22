@@ -529,12 +529,6 @@
   overflow: hidden;
 }
 
-@media (max-width: 1199px), (pointer: coarse) {
-  .shreshta-landing.has-overlaps .numbers .track {
-    touch-action: pan-x pinch-zoom;
-  }
-}
-
 .shreshta-landing .nums {
   position: absolute;
   inset: 0;
@@ -1499,14 +1493,12 @@
 @media (min-width: 720px) and (max-width: 1199px), (min-width: 720px) and (pointer: coarse) {
   .shreshta-landing.has-overlaps .salon .track {
     height: 225svh;
-    touch-action: pan-x pinch-zoom;
   }
 }
 
 @media (max-width: 719px) and (min-height: 500px) and (orientation: portrait) {
   .shreshta-landing.has-overlaps .salon .track {
     height: 250svh;
-    touch-action: pan-x pinch-zoom;
   }
 
   .shreshta-landing.has-overlaps .salon .stick {

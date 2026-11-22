@@ -74,6 +74,12 @@ html.is-overlay-open {
   scroll-margin-top: 0;
 }
 
+@media (pointer: coarse) {
+  .shreshta-landing .services-showcase {
+    --service-step: clamp(340px, 65svh, 640px);
+  }
+}
+
 .services-sticky {
   position: sticky;
   top: 0;
@@ -88,12 +94,6 @@ html.is-overlay-open {
   background-color: var(--services-cream);
   user-select: none;
   -webkit-user-select: none;
-  touch-action: pan-y;
-}
-
-.shreshta-landing.has-overlaps .services-showcase,
-.shreshta-landing.has-overlaps .hero-stage {
-  touch-action: pan-x pinch-zoom;
 }
 
 .hero-slide {
