@@ -8,6 +8,7 @@ import { SiteNavigation } from './SiteNavigation';
 import { ConsultationForm } from './ConsultationForm';
 import { CONSULTATION_NOTE, PROCESS_STAGES, STORY_LINE, STORY_PHOTO_ALT, STORY_PHOTO_URL, STORY_PORTRAIT_LINES } from '../data/studioContent';
 import { SERVICES_HREF } from '../data/siteNavigation';
+import { CEREMONY_SCROLL_DURATION, ceremonyScrollInput } from '../utils/ceremonyScroll';
 import './ShreshtaLanding.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -249,7 +250,21 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
     }
 
     if (!still) {
-      const lenis = new Lenis({ lerp: 0.05, wheelMultiplier: 0.72, smoothWheel: true });
+      const showcase = root.querySelector<HTMLElement>('#services');
+      const showcaseStage = showcase?.querySelector<HTMLElement>('.services-sticky');
+      const lenis: Lenis = new Lenis({
+        lerp: 0.05,
+        wheelMultiplier: 0.72,
+        smoothWheel: true,
+        virtualScroll: showcase && showcaseStage
+          ? ceremonyScrollInput(showcase, showcaseStage, () => lenis.targetScroll, (target) => {
+            lenis.scrollTo(target, {
+              duration: CEREMONY_SCROLL_DURATION,
+              easing: (progress) => 0.5 - Math.cos(Math.PI * progress) / 2,
+            });
+          })
+          : undefined,
+      });
       lenisRef.current = lenis;
       const tick = (time: number) => lenis.raf(time * 1000);
       gsap.ticker.add(tick);

@@ -6,6 +6,7 @@ import {
 } from './data/ceremonies';
 import { ShreshtaLandingPage } from './components/ShreshtaLandingPage';
 import { ceremonyServiceHref } from './data/siteNavigation';
+import { ceremonyStep } from './utils/ceremonyScroll';
 
 const COVER_TABLE: ReadonlyArray<readonly [number, number]> = [
   [0, 0],
@@ -201,9 +202,8 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     // Hold each ceremony before wiping to the next. Scrolling back reverses the wipe.
     const updateSlides = () => {
       frame = 0;
-      const distance = Math.max(1, showcase.offsetHeight - sticky.offsetHeight);
       const scroll = -showcase.getBoundingClientRect().top;
-      const position = Math.min(slideCount - 1, Math.max(0, (scroll / distance) * slideCount));
+      const position = Math.min(slideCount - 1, Math.max(0, scroll / ceremonyStep(showcase, sticky)));
       const frameWidth = 1440 * uRef.current;
       if (
         position === lastPosition &&
