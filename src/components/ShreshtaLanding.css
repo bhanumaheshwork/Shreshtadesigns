@@ -529,6 +529,12 @@
   overflow: hidden;
 }
 
+@media (max-width: 1199px), (pointer: coarse) {
+  .shreshta-landing.has-overlaps .numbers .track {
+    touch-action: pan-x pinch-zoom;
+  }
+}
+
 .shreshta-landing .nums {
   position: absolute;
   inset: 0;
@@ -1490,9 +1496,17 @@
   }
 }
 
-@media (min-width: 360px) and (max-width: 719px) and (min-height: 720px) and (orientation: portrait) {
+@media (min-width: 720px) and (max-width: 1199px), (min-width: 720px) and (pointer: coarse) {
+  .shreshta-landing.has-overlaps .salon .track {
+    height: 225svh;
+    touch-action: pan-x pinch-zoom;
+  }
+}
+
+@media (max-width: 719px) and (min-height: 500px) and (orientation: portrait) {
   .shreshta-landing.has-overlaps .salon .track {
     height: 250svh;
+    touch-action: pan-x pinch-zoom;
   }
 
   .shreshta-landing.has-overlaps .salon .stick {
@@ -1517,6 +1531,11 @@
     position: absolute;
     inset: auto var(--pad) max(72px, 8.5svh);
     margin: 0;
+  }
+
+  .shreshta-landing.has-overlaps .salon .cord {
+    opacity: var(--k, 0);
+    transform: translateY(calc((1 - var(--k, 0)) * 8px));
   }
 }
 

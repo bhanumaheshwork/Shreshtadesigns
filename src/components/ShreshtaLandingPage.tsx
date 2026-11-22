@@ -8,7 +8,7 @@ import { SiteNavigation } from './SiteNavigation';
 import { ConsultationForm } from './ConsultationForm';
 import { CONSULTATION_NOTE, PROCESS_STAGES, STORY_LINE, STORY_PHOTO_ALT, STORY_PHOTO_URL, STORY_PORTRAIT_LINES } from '../data/studioContent';
 import { SERVICES_HREF } from '../data/siteNavigation';
-import { CEREMONY_SCROLL_DURATION, ceremonyScrollInput } from '../utils/ceremonyScroll';
+import { CEREMONY_STOPS, MANDAP_STOPS, sceneScrollInput } from '../utils/ceremonyScroll';
 import './ShreshtaLanding.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -25,7 +25,13 @@ const wordmark = BRAND_SHORT_NAME.toUpperCase();
 const EDITORIAL_LAYOUT = '(min-width: 720px)';
 const PHONE_LAYOUT = '(max-width: 719px)';
 const PHONE_PORTRAIT_LAYOUT = `${PHONE_LAYOUT} and (orientation: portrait)`;
-const PHONE_SALON_PINNED_LAYOUT = `${PHONE_PORTRAIT_LAYOUT} and (min-width: 360px) and (min-height: 720px)`;
+const PHONE_SALON_PINNED_LAYOUT = `${PHONE_PORTRAIT_LAYOUT} and (min-height: 500px)`;
+const COMPACT_LAYOUT = '(max-width: 1199px), (pointer: coarse)';
+const COMPACT_SALON_LAYOUT = `${PHONE_SALON_PINNED_LAYOUT}, (min-width: 720px) and (max-width: 1199px), (min-width: 720px) and (pointer: coarse)`;
+const PROCESS_TRANSITION_WIDTH = 0.55;
+const PROCESS_STOPS = PROCESS_STAGES.map((_, index) =>
+  (index ? index + PROCESS_TRANSITION_WIDTH / 2 + 0.05 : 0) / PROCESS_STAGES.length,
+);
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const off = (i: number, amp: number) =>
@@ -252,18 +258,21 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
     if (!still) {
       const showcase = root.querySelector<HTMLElement>('#services');
       const showcaseStage = showcase?.querySelector<HTMLElement>('.services-sticky');
+      const processTrack = numbersTrackRef.current;
+      const processStage = processTrack?.querySelector<HTMLElement>('.stick');
+      const mandap = root.querySelector<HTMLElement>('#salon .track');
+      const mandapStage = mandap?.querySelector<HTMLElement>('.stick');
+      const scenes = [
+        ...(showcase && showcaseStage ? [{ track: showcase, stage: showcaseStage, stops: CEREMONY_STOPS }] : []),
+        ...(processTrack && processStage ? [{ track: processTrack, stage: processStage, stops: PROCESS_STOPS, enabled: window.matchMedia(COMPACT_LAYOUT) }] : []),
+        ...(mandap && mandapStage ? [{ track: mandap, stage: mandapStage, stops: MANDAP_STOPS, enabled: window.matchMedia(COMPACT_SALON_LAYOUT) }] : []),
+      ];
       const lenis: Lenis = new Lenis({
         lerp: 0.05,
         wheelMultiplier: 0.72,
         smoothWheel: true,
-        virtualScroll: showcase && showcaseStage
-          ? ceremonyScrollInput(showcase, showcaseStage, () => lenis.targetScroll, (target) => {
-            lenis.scrollTo(target, {
-              duration: CEREMONY_SCROLL_DURATION,
-              easing: (progress) => 0.5 - Math.cos(Math.PI * progress) / 2,
-            });
-          })
-          : undefined,
+        touchInertiaExponent: 1,
+        virtualScroll: sceneScrollInput(scenes, () => lenis),
       });
       lenisRef.current = lenis;
       const tick = (time: number) => lenis.raf(time * 1000);
@@ -317,7 +326,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
       }, root);
 
       editorialMedia.add(EDITORIAL_LAYOUT, () => {
-        // Salon background shift & 3 suspended cord cards
+        // Salon background shift
         gsap.fromTo(
           '.shreshta-landing .salon',
           { '--salon-top': '#bc7b59' },
@@ -332,23 +341,6 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
             },
           }
         );
-
-        root.querySelectorAll('.cord').forEach((cordEl, i) => {
-          gsap.fromTo(
-            cordEl,
-            { '--k': 0 },
-            {
-              '--k': 1,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: '.shreshta-landing .salon .track',
-                start: `top ${30 - i * 22}%`,
-                end: `top ${-10 - i * 22}%`,
-                scrub: true,
-              },
-            }
-          );
-        });
 
         // Florals light sweep & poster scale settle
         gsap.fromTo(
@@ -428,13 +420,26 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
         });
       });
 
-      editorialMedia.add(PHONE_SALON_PINNED_LAYOUT, () => {
-        // Reveal each note into its own reserved row.
-        const notes = Array.from(root.querySelectorAll('.salon .cord'));
-        gsap.set(notes, { autoAlpha: 0, y: 8 });
+      editorialMedia.add({ wide: EDITORIAL_LAYOUT, compact: COMPACT_SALON_LAYOUT }, ({ conditions }) => {
+        const notes = root.querySelectorAll('.salon .cord');
+        if (!conditions?.compact) {
+          notes.forEach((note, index) => {
+            gsap.fromTo(note, { '--k': 0 }, {
+              '--k': 1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: mandap,
+                start: `top ${30 - index * 22}%`,
+                end: `top ${-10 - index * 22}%`,
+                scrub: true,
+              },
+            });
+          });
+          return;
+        }
         const noteTransition = gsap.timeline({
           scrollTrigger: {
-            trigger: '.salon .track',
+            trigger: mandap,
             start: 'top top',
             end: 'bottom bottom',
             scrub: true,
@@ -442,15 +447,15 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
         });
 
         notes.forEach((note, index) => {
-          noteTransition.to(note, { autoAlpha: 1, y: 0, duration: 0.1 }, 0.065 + index * 0.28);
+          noteTransition.fromTo(note, { '--k': 0 }, { '--k': 1, duration: 0.12 }, MANDAP_STOPS[index] - 0.16);
         });
-        noteTransition.set(notes.at(-1)!, { autoAlpha: 1 }, 1);
+        noteTransition.set(notes[notes.length - 1], { '--k': 1 }, 1);
       });
 
       editorialMedia.add({ phone: PHONE_LAYOUT, pinned: PHONE_SALON_PINNED_LAYOUT }, ({ conditions }) => {
         if (!conditions?.phone || conditions.pinned) return;
         root.querySelectorAll('.salon .cord').forEach((note) => {
-          gsap.fromTo(note, { y: 8, opacity: 0.8 }, {
+          gsap.fromTo(note, { y: 8, opacity: 0 }, {
             y: 0,
             opacity: 1,
             scrollTrigger: {
@@ -492,7 +497,6 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
 
     if (trackEl && processPanel && plates.length > 0) {
       const n = plates.length;
-      const W = 0.55;
       const editorialLayout = window.matchMedia(EDITORIAL_LAYOUT);
       const ioCubic = (t: number) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -507,7 +511,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
         const p = clamp(-r.top / span) * n;
         let P = 0;
         for (let k = 1; k < n; k++) {
-          P += still ? (p >= k ? 1 : 0) : ioCubic(clamp((p - k + W / 2) / W));
+          P += still ? (p >= k ? 1 : 0) : ioCubic(clamp((p - k + PROCESS_TRANSITION_WIDTH / 2) / PROCESS_TRANSITION_WIDTH));
         }
 
         const width = trackEl.clientWidth;

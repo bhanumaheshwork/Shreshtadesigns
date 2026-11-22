@@ -91,6 +91,11 @@ html.is-overlay-open {
   touch-action: pan-y;
 }
 
+.shreshta-landing.has-overlaps .services-showcase,
+.shreshta-landing.has-overlaps .hero-stage {
+  touch-action: pan-x pinch-zoom;
+}
+
 .hero-slide {
   position: absolute;
   inset: 0;

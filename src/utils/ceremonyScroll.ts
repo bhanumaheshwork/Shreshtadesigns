@@ -1,37 +1,63 @@
+import type Lenis from 'lenis';
 import type { LenisOptions } from 'lenis';
 import { CEREMONY_SLIDES } from '../data/ceremonies';
 
 const SLIDE_COUNT = CEREMONY_SLIDES.length;
 const WHEEL_GAP_MS = 140;
 const SWIPE_THRESHOLD = 18;
-export const CEREMONY_SCROLL_DURATION = 0.72;
+const SCROLL_DURATION = 0.72;
+export const CEREMONY_STOPS = CEREMONY_SLIDES.map((_, index) => (index ? index + 0.12 : 0) / SLIDE_COUNT);
+export const MANDAP_STOPS = [0.24, 0.55, 0.86];
 
 export function ceremonyStep(showcase: HTMLElement, stage: HTMLElement) {
   return Math.max(1, (showcase.offsetHeight - stage.offsetHeight) / SLIDE_COUNT);
 }
 
-export function ceremonyScrollInput(
-  showcase: HTMLElement,
-  stage: HTMLElement,
-  getScrollTarget: () => number,
-  scrollTo: (target: number) => void,
+interface ScrollScene {
+  track: HTMLElement;
+  stage: HTMLElement;
+  stops: number[];
+  enabled?: MediaQueryList;
+}
+
+export function sceneScrollInput(
+  scenes: ScrollScene[],
+  getLenis: () => Lenis,
 ): NonNullable<LenisOptions['virtualScroll']> {
   let wheelTime = -Infinity;
   let wheelDirection = 0;
   let wheelHandled = false;
   let touchDistance = 0;
   let touchHandled = false;
+  let pinching = false;
   let requestedPosition: number | undefined;
   let requestedAt = -Infinity;
 
   return ({ deltaX, deltaY, event }) => {
     const wheel = event instanceof WheelEvent;
     if (wheel && event.ctrlKey) return true;
-    if (!wheel && (event as TouchEvent).touches.length > 1) return true;
+    if (!wheel) {
+      const { touches } = event as TouchEvent;
+      if (touches.length > 1) pinching = true;
+      if (pinching) {
+        if (touches.length === 0) pinching = false;
+        return false;
+      }
+    }
+    const lenis = getLenis();
+    const scroll = window.scrollY;
+    const advancing = event.timeStamp - requestedAt < SCROLL_DURATION * 1000;
+
     if (event.type === 'touchstart') {
       touchDistance = 0;
       touchHandled = false;
-      return true;
+      // Take over the pan before the browser commits to native momentum near a pinned scene.
+      lenis.options.syncTouch = scenes.some(({ track, enabled }) => {
+        if (enabled && !enabled.matches) return false;
+        const { top, bottom } = track.getBoundingClientRect();
+        return top < 2 * window.innerHeight && bottom > -window.innerHeight;
+      });
+      return !advancing;
     }
 
     const direction = Math.sign(deltaY);
@@ -51,26 +77,26 @@ export function ceremonyScrollInput(
       return true;
     }
 
-    const scroll = window.scrollY;
-    const start = showcase.getBoundingClientRect().top + scroll;
-    const step = ceremonyStep(showcase, stage);
-    const end = start + SLIDE_COUNT * step;
-    const projected = (wheel ? getScrollTarget() : scroll) + deltaY;
-    const advancing = event.timeStamp - requestedAt < CEREMONY_SCROLL_DURATION * 1000;
+    const projected = lenis.targetScroll + deltaY;
     const position = advancing ? requestedPosition ?? scroll : scroll;
-    const stops = Array.from({ length: SLIDE_COUNT }, (_, index) =>
-      start + (index === 0 ? 0 : index + 0.12) * step,
-    );
-
     let next: number | undefined;
-    if (position < start - 2 && direction > 0 && projected >= start - 2) {
-      next = stops[0];
-    } else if (position > end && direction < 0 && projected <= end) {
-      next = stops.at(-1);
-    } else if (position >= start - 2 && position <= end) {
-      next = direction > 0
-        ? stops.find((stop) => stop > position + 2)
-        : stops.reverse().find((stop) => stop < position - 2);
+    for (const scene of direction > 0 ? scenes : [...scenes].reverse()) {
+      if (scene.enabled && !scene.enabled.matches) continue;
+      const start = scene.track.getBoundingClientRect().top + scroll;
+      const distance = scene.track.offsetHeight - scene.stage.offsetHeight;
+      if (distance <= 0) continue;
+      const end = start + distance;
+      const stops = scene.stops.map((fraction) => start + fraction * distance);
+      if (position < start - 2 && direction > 0 && projected >= start - 2) {
+        next = stops[0];
+      } else if (position > end && direction < 0 && projected <= end) {
+        next = stops.at(-1);
+      } else if (position >= start - 2 && position <= end) {
+        next = direction > 0
+          ? stops.find((stop) => stop > position + 2)
+          : stops.reverse().find((stop) => stop < position - 2);
+      }
+      if (next !== undefined) break;
     }
     if (next === undefined) return true;
 
@@ -85,7 +111,10 @@ export function ceremonyScrollInput(
     }
     requestedPosition = next;
     requestedAt = event.timeStamp;
-    scrollTo(next);
+    lenis.scrollTo(next, {
+      duration: SCROLL_DURATION,
+      easing: (progress) => 0.5 - Math.cos(Math.PI * progress) / 2,
+    });
     return false;
   };
 }
