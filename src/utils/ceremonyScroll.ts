@@ -21,10 +21,11 @@ export function paceCeremonyWheel(
 
     const lenis = getLenis();
     const pending = lenis.targetScroll - lenis.animatedScroll;
-    const lead = ceremonyStep(showcase, stage) * 0.6;
+    const step = ceremonyStep(showcase, stage);
+    const impulse = Math.min(Math.abs(deltaY), step * 0.12);
     const direction = Math.sign(deltaY);
-    // Keep the destination close to the visible frame, and drop old momentum on reversal.
-    const nextLead = Math.min(lead, Math.max(0, pending * direction) + Math.abs(deltaY));
+    // Limit large wheel deltas without grouping gestures or delaying a reversal.
+    const nextLead = Math.min(step / 3, Math.max(0, pending * direction) + impulse);
     input.deltaY = direction * nextLead - pending;
     if (input.deltaY === 0 && event.cancelable) event.preventDefault();
     return true;

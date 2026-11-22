@@ -8,23 +8,12 @@ import { ShreshtaLandingPage } from './components/ShreshtaLandingPage';
 import { ceremonyServiceHref } from './data/siteNavigation';
 import { ceremonyStep } from './utils/ceremonyScroll';
 
+const TRANSITION_MS = 970;
 const COVER_TABLE: ReadonlyArray<readonly [number, number]> = [
-  [0, 0],
-  [0.031, 0.006],
-  [0.134, 0.012],
-  [0.206, 0.023],
-  [0.278, 0.047],
-  [0.34, 0.07],
-  [0.412, 0.105],
-  [0.485, 0.158],
-  [0.546, 0.246],
-  [0.583, 0.55],
-  [0.62, 0.825],
-  [0.69, 0.9],
-  [0.79, 0.94],
-  [0.85, 0.956],
-  [0.93, 0.975],
-  [1, 1],
+  [0, 0], [0.031, 0.006], [0.134, 0.012], [0.206, 0.023],
+  [0.278, 0.047], [0.34, 0.07], [0.412, 0.105], [0.485, 0.158],
+  [0.546, 0.246], [0.583, 0.55], [0.62, 0.825], [0.69, 0.9],
+  [0.79, 0.94], [0.85, 0.956], [0.93, 0.975], [1, 1],
 ];
 
 const PARALLAX_FACTORS = {
@@ -50,13 +39,11 @@ function easeOutQuad(k: number): number {
 
 function sampleCover(t: number): number {
   if (t <= 0) return 0;
-  if (t >= 1) return 1;
-  for (let i = 0; i < COVER_TABLE.length - 1; i++) {
-    const [t0, c0] = COVER_TABLE[i];
-    const [t1, c1] = COVER_TABLE[i + 1];
-    if (t >= t0 && t <= t1) {
-      const k = (t - t0) / (t1 - t0);
-      return c0 + (c1 - c0) * smoothstep(k);
+  for (let i = 1; i < COVER_TABLE.length; i++) {
+    const [end, endCover] = COVER_TABLE[i];
+    if (t <= end) {
+      const [start, startCover] = COVER_TABLE[i - 1];
+      return startCover + (endCover - startCover) * smoothstep((t - start) / (end - start));
     }
   }
   return 1;
@@ -194,56 +181,90 @@ export default function App({ logoSrc }: { logoSrc: string }) {
 
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const slideCount = CEREMONY_SLIDES.length;
-    let frame = 0;
-    let lastPosition = -1;
-    let lastFrameWidth = 0;
-    let lastReducedMotion = motion.matches;
+    let scrollFrame = 0;
+    let animationFrame = 0;
+    let settled = -1;
+    let desired = 0;
+    let active = -1;
+    let transition: { from: number; to: number; elapsed: number; lastFrame: number } | undefined;
 
-    // Hold each ceremony before wiping to the next. Scrolling back reverses the wipe.
-    const updateSlides = () => {
-      frame = 0;
-      const scroll = -showcase.getBoundingClientRect().top;
-      const position = Math.min(slideCount - 1, Math.max(0, scroll / ceremonyStep(showcase, sticky)));
-      const frameWidth = 1440 * uRef.current;
-      if (
-        position === lastPosition &&
-        frameWidth === lastFrameWidth &&
-        motion.matches === lastReducedMotion
-      ) return;
-      lastPosition = position;
-      lastFrameWidth = frameWidth;
-      lastReducedMotion = motion.matches;
-
-      const from = Math.floor(position);
-      const to = Math.min(from + 1, slideCount - 1);
-      const progress = Math.max(0, (position - from - 0.38) / 0.62);
+    const renderSlides = (from: number, to: number, progress: number) => {
+      const wiping = from !== to;
+      const direction = Math.sign(to - from);
       const cover = sampleCover(progress);
-      const active = cover < 0.5 ? from : to;
-      const wiping = progress > 0 && !motion.matches;
       const incomingProgress = easeOutQuad((progress - 0.5) / 0.42);
-
+      const frameWidth = 1440 * uRef.current;
       slideRefs.current.forEach((slide, index) => {
         if (!slide) return;
-        const visible = wiping ? index === from || index === to : index === active;
+        const visible = index === from || index === to;
         slide.style.display = visible ? 'block' : 'none';
         slide.style.zIndex = index === from ? '2' : '1';
-        slide.style.clipPath = wiping && index === from ? `inset(0 ${cover * 100}% 0 0)` : '';
+        slide.style.clipPath = wiping && index === from
+          ? direction > 0 ? `inset(0 ${cover * 100}% 0 0)` : `inset(0 0 0 ${cover * 100}%)`
+          : '';
 
         if (!visible) return;
         for (const name of LAYER_NAMES) {
           const layer = layerRefs.current[index][name];
           if (!layer) continue;
           const factor = index === from
-            ? -0.14 * cover
-            : (1 - incomingProgress) * PARALLAX_FACTORS[name];
+            ? -direction * 0.14 * cover
+            : direction * (1 - incomingProgress) * PARALLAX_FACTORS[name];
           layer.style.transform = wiping ? `translateX(${factor * frameWidth}px)` : '';
         }
       });
-      setCurrentIndex(active);
+      const nextActive = cover < 0.5 ? from : to;
+      if (active !== nextActive) {
+        active = nextActive;
+        setCurrentIndex(active);
+      }
+    };
+
+    const animate = (now: number) => {
+      animationFrame = 0;
+      if (!transition) {
+        if (desired === settled) return;
+        transition = { from: settled, to: settled + Math.sign(desired - settled), elapsed: 0, lastFrame: now };
+      }
+
+      const { from, to, lastFrame } = transition;
+      const forward = Math.sign(desired - from) === Math.sign(to - from);
+      const elapsed = transition.elapsed + Math.max(0, now - lastFrame) * (forward ? 1 : -1);
+      transition.lastFrame = now;
+      transition.elapsed = elapsed;
+
+      if (elapsed >= TRANSITION_MS || (!forward && elapsed <= 0)) {
+        settled = forward ? to : from;
+        transition = undefined;
+        renderSlides(settled, settled, 0);
+      } else {
+        renderSlides(from, to, elapsed / TRANSITION_MS);
+      }
+
+      if (transition || desired !== settled) animationFrame = requestAnimationFrame(animate);
+    };
+
+    // Scroll selects the ceremony. The reference wipe has its own timing so a fast input
+    // cannot run the visual transition to completion in a single frame.
+    const updateSlides = () => {
+      scrollFrame = 0;
+      const { top, bottom } = showcase.getBoundingClientRect();
+      const position = -top / ceremonyStep(showcase, sticky);
+      desired = Math.min(slideCount - 1, Math.max(0, Math.floor(position + 0.275)));
+
+      if (settled < 0 || motion.matches || top >= window.innerHeight || bottom <= 0) {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        if (transition || settled !== desired) renderSlides(desired, desired, 0);
+        settled = desired;
+        transition = undefined;
+      } else if (!animationFrame && settled !== desired) {
+        animationFrame = requestAnimationFrame(animate);
+      }
     };
 
     const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(updateSlides);
+      if (!scrollFrame) scrollFrame = requestAnimationFrame(updateSlides);
     };
 
     updateSlides();
@@ -251,7 +272,8 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     window.addEventListener('resize', onScroll);
     motion.addEventListener('change', onScroll);
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(scrollFrame);
+      cancelAnimationFrame(animationFrame);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
       motion.removeEventListener('change', onScroll);

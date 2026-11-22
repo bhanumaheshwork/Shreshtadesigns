@@ -68,7 +68,7 @@ html.is-overlay-open {
 
 .shreshta-landing .services-showcase {
   --services-viewport: max(480px, 100svh);
-  --service-step: clamp(260px, 56svh, 560px);
+  --service-step: clamp(320px, 72svh, 720px);
   height: calc(var(--services-viewport) + var(--service-count) * var(--service-step));
   background-color: var(--services-cream);
   scroll-margin-top: 0;
@@ -76,7 +76,7 @@ html.is-overlay-open {
 
 @media (pointer: coarse) {
   .shreshta-landing .services-showcase {
-    --service-step: clamp(340px, 65svh, 640px);
+    --service-step: clamp(400px, 82svh, 840px);
   }
 }
 
