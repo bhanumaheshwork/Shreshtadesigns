@@ -1580,6 +1580,15 @@
   .shreshta-landing.has-overlaps :is(.hull, .services-showcase, .numbers, .salon, .trials) + section {
     margin-top: calc(-1 * var(--section-overlap));
   }
+
+  /* Keep Experiences pinned while Services rises over it for one viewport. */
+  .shreshta-landing.has-overlaps .hull .track {
+    height: calc(170svh + 100svh - var(--section-overlap));
+  }
+
+  .shreshta-landing.has-overlaps .hull + .services-showcase {
+    margin-top: -100svh;
+  }
 }
 
 @media (max-width: 719px) and (prefers-reduced-motion: no-preference) {

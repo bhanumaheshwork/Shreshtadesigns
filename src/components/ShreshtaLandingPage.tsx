@@ -626,7 +626,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
       <main id="main-content" tabIndex={-1}>
         {/* 1 · Our Story */}
         <section
-          className="reflect"
+          className="reflect overlap-sheet"
           id="our-story"
           data-nav="light"
           aria-label="Our story"
