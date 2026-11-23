@@ -1,9 +1,9 @@
 // Both sticky slideshows use the same gesture cadence. The cooldown starts with the wipe.
-const TRANSITION_MS = 970;
-const COOLDOWN_MS = 1120;
-const WHEEL_IDLE_MS = 180;
-const GESTURE_THRESHOLD = 24;
-const HORIZONTAL_SWIPE_THRESHOLD = 28;
+const TRANSITION_MS = 380;
+const COOLDOWN_MS = 420;
+const WHEEL_IDLE_MS = 120;
+const GESTURE_THRESHOLD = 16;
+const HORIZONTAL_SWIPE_THRESHOLD = 18;
 
 type RenderSlide = (from: number, to: number, progress: number) => void;
 

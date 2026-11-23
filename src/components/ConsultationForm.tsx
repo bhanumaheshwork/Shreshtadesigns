@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { CeremonyId } from '../data/ceremonies';
 import './ConsultationForm.css';
 
@@ -32,7 +32,14 @@ export function ConsultationForm({
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const inFlight = useRef(false);
+  const successTimerRef = useRef<number | null>(null);
   const customGuests = guestRange === 'custom';
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) window.clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   async function submitConsultation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,7 +74,11 @@ export function ConsultationForm({
 
       form.reset();
       setGuestRange('');
-      setFeedback({ kind: 'success', text: 'Your enquiry has been sent. We’ll be in touch.' });
+      setFeedback({ kind: 'success', text: 'Your enquiry has been sent successfully. We’ll be in touch.' });
+      if (successTimerRef.current) window.clearTimeout(successTimerRef.current);
+      successTimerRef.current = window.setTimeout(() => {
+        setFeedback(null);
+      }, 5000);
     } catch {
       setFeedback({ kind: 'error', text: SEND_ERROR });
     } finally {
@@ -81,7 +92,7 @@ export function ConsultationForm({
     <>
       <p className="consultation-form__fallback">To enquire, email <a href="mailto:info@shreshtadesigns.com">info@shreshtadesigns.com</a> or use the WhatsApp button.</p>
       <form
-        className={className ? `consultation-form ${className}` : 'consultation-form'}
+        className={className ? `consultation-form ${className} ${feedback?.kind === 'success' ? 'is-success' : ''}` : `consultation-form ${feedback?.kind === 'success' ? 'is-success' : ''}`}
         action="/api/consultation"
         method="post"
         onChange={() => setFeedback(null)}
@@ -175,9 +186,10 @@ export function ConsultationForm({
           <button type="submit">{sending ? 'Sending…' : 'Request a consultation'}</button>
         </fieldset>
         {feedback && (
-          <p className="consultation-form__feedback" role={feedback.kind === 'error' ? 'alert' : 'status'}>
-            {feedback.text}
-          </p>
+          <div className={`consultation-form__feedback ${feedback.kind === 'success' ? 'is-success' : ''}`} role={feedback.kind === 'error' ? 'alert' : 'status'}>
+            {feedback.kind === 'success' && <span className="consultation-form__tick" aria-hidden="true">✓</span>}
+            <span>{feedback.text}</span>
+          </div>
         )}
       </form>
     </>

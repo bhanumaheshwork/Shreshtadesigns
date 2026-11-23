@@ -62,7 +62,7 @@ function computeWordLayout(
 ): WordLayout {
   let baseInkWidth = word.length * 64;
   if (ctx) {
-    ctx.font = '700 100px "Bodoni Moda", Didot, "Times New Roman", serif';
+    ctx.font = '700 100px "Playfair Display", Georgia, serif';
     const metrics = ctx.measureText(word);
     const left = metrics.actualBoundingBoxLeft ?? 0;
     const right = metrics.actualBoundingBoxRight ?? metrics.width;

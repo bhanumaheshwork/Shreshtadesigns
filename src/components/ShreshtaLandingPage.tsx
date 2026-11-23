@@ -531,27 +531,24 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
           const d = k - P;
           el.style.transform = `translate3d(${(d * slideDistance).toFixed(1)}px,0,0)`;
           el.style.setProperty('--px', `${(-d * 22).toFixed(2)}%`);
-          el.style.visibility = Math.abs(d) >= 1 ? 'hidden' : 'visible';
+          el.style.visibility = Math.abs(d) > 1.4 ? 'hidden' : 'visible';
+          el.style.opacity = clamp(1 - Math.abs(d) * 1.2).toFixed(3);
         });
 
         cards.forEach((c, k) => {
           const d = k - P;
-          const hidden = k !== Math.round(P);
-          c.setAttribute('aria-hidden', String(hidden));
-          c.style.pointerEvents = hidden ? 'none' : '';
-          c.style.visibility = splitLayout
-            ? Math.abs(d) >= 0.6 ? 'hidden' : 'visible'
-            : Math.abs(d) >= 1 ? 'hidden' : 'visible';
-          c.style.opacity = splitLayout ? clamp(1 - Math.abs(d) * 1.8).toFixed(3) : '';
+          const active = Math.abs(d) < 0.55;
+          c.setAttribute('aria-hidden', String(!active));
+          c.style.pointerEvents = active ? '' : 'none';
+          c.style.visibility = Math.abs(d) > 1.4 ? 'hidden' : 'visible';
+          c.style.opacity = clamp(1 - Math.abs(d) * 1.5).toFixed(3);
           c.style.transform = splitLayout
             ? `translateY(-50%) translateX(${(d * width * 0.5).toFixed(1)}px)`
             : `translate3d(${(d * slideDistance).toFixed(1)}px,0,0)`;
         });
 
         if (fline) {
-          fline.style.opacity = splitLayout
-            ? clamp(1 - 4 * Math.abs(P - Math.round(P))).toFixed(3)
-            : '';
+          fline.style.opacity = clamp(1 - 2 * Math.abs(P - Math.round(P))).toFixed(3);
         }
         setProcessIndex(Math.max(0, Math.min(n - 1, Math.round(P))));
       };

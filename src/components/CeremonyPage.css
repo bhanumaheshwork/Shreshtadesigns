@@ -7,7 +7,7 @@
   --ceremony-rule: #dacebd;
   --ceremony-surface: #f1e4d3;
   --ceremony-backdrop: rgba(38, 16, 17, 0.84);
-  --ceremony-serif: "Bodoni Moda", Didot, "Times New Roman", serif;
+  --ceremony-serif: "Playfair Display", Georgia, serif;
   --ceremony-gutter: clamp(20px, 5vw, 76px);
 }
 

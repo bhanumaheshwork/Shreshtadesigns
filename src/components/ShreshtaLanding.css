@@ -22,9 +22,9 @@
   --g-fog: #e8cdb2;
   --g-rock: #794520;
   --g-deep: #281309;
-  --serif: "Bodoni Moda", Didot, "Times New Roman", serif;
-  --sans: "Geist", Inter, system-ui, sans-serif;
-  --mono: "Geist Mono", ui-monospace, monospace;
+  --serif: "Playfair Display", Georgia, serif;
+  --sans: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  --mono: "Plus Jakarta Sans", ui-monospace, monospace;
   --s1: 4px;
   --s2: 8px;
   --s3: 16px;
@@ -541,7 +541,7 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(55, 27, 14, 0.08);
+  background: #e4d9d4;
   color: var(--ink);
   cursor: pointer;
   opacity: 0.88;

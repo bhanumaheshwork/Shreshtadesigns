@@ -36,27 +36,15 @@ function CeremonySection({ slide, priority }: { slide: CeremonySlide; priority: 
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : 'auto'}
           />
-          <figcaption>{hero.title}</figcaption>
         </figure>
       </div>
 
       <div className="ceremony-page__details">
         <figure className="ceremony-page__photo ceremony-page__photo--detail">
           <img src={detail.src} alt={detail.title} loading="lazy" decoding="async" />
-          <figcaption>{detail.caption}</figcaption>
         </figure>
         <div>
           <h3>What we design</h3>
-          <dl className="ceremony-page__facts">
-            <div>
-              <dt>Timing</dt>
-              <dd>{service.duration}</dd>
-            </div>
-            <div>
-              <dt>Guest count</dt>
-              <dd>{service.guestRange}</dd>
-            </div>
-          </dl>
           <ul className="ceremony-page__highlights">
             {service.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
           </ul>
@@ -111,9 +99,8 @@ export function ServicesPage({ logoSrc }: { logoSrc: string }) {
           <a href="/" className="ceremony-page__logo" aria-label={`${BRAND_NAME} home`}>
             <img src={logoSrc} alt="" />
           </a>
-          <a className="ceremony-page__back" href="/#services">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to showcase
+          <a className="ceremony-album__enquire" href="/enquire/">
+            Enquire
           </a>
         </div>
       </header>
