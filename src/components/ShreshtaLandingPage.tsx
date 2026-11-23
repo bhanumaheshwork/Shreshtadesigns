@@ -8,7 +8,8 @@ import { SiteNavigation } from './SiteNavigation';
 import { ConsultationForm } from './ConsultationForm';
 import { CONSULTATION_NOTE, PROCESS_STAGES, STORY_LINE, STORY_PHOTO_ALT, STORY_PHOTO_URL, STORY_PORTRAIT_LINES } from '../data/studioContent';
 import { SERVICES_HREF } from '../data/siteNavigation';
-import { paceCeremonyWheel } from '../utils/ceremonyScroll';
+import { bindSlideTrack } from '../utils/slideTrack';
+import { CEREMONY_SLIDES } from '../data/ceremonies';
 import './ShreshtaLanding.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -16,6 +17,8 @@ gsap.registerPlugin(ScrollTrigger);
 interface ShreshtaLandingPageProps {
   logoSrc: string;
   services: React.ReactNode;
+  renderService: (from: number, to: number, progress: number) => void;
+  selectService: React.RefObject<((index: number) => void) | null>;
 }
 
 const BANDS = 72;
@@ -27,7 +30,6 @@ const PHONE_LAYOUT = '(max-width: 719px)';
 const PHONE_PORTRAIT_LAYOUT = `${PHONE_LAYOUT} and (orientation: portrait)`;
 const PHONE_SALON_PINNED_LAYOUT = `${PHONE_PORTRAIT_LAYOUT} and (min-height: 500px)`;
 const COMPACT_SALON_LAYOUT = `${PHONE_SALON_PINNED_LAYOUT}, (min-width: 720px) and (max-width: 1199px), (min-width: 720px) and (pointer: coarse)`;
-const PROCESS_TRANSITION_WIDTH = 0.55;
 const MANDAP_REVEALS = [0.08, 0.39, 0.70];
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -37,6 +39,8 @@ const off = (i: number, amp: number) =>
 export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
   logoSrc,
   services,
+  renderService,
+  selectService,
 }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -253,14 +257,12 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
     }
 
     if (!still) {
-      const showcase = root.querySelector<HTMLElement>('#services');
-      const showcaseStage = showcase?.querySelector<HTMLElement>('.services-sticky');
       const mandap = root.querySelector<HTMLElement>('#salon .track');
       const lenis: Lenis = new Lenis({
         lerp: 0.09,
         wheelMultiplier: 0.72,
         smoothWheel: true,
-        virtualScroll: showcase && showcaseStage ? paceCeremonyWheel(showcase, showcaseStage, () => lenis) : undefined,
+        virtualScroll: ({ event }) => !event.defaultPrevented,
       });
       lenisRef.current = lenis;
       const tick = (time: number) => lenis.raf(time * 1000);
@@ -476,9 +478,26 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
       });
     }
 
-    // The process plates pan horizontally with the existing scroll progression.
+    const alignPage = (top: number) => {
+      if (lenisRef.current) lenisRef.current.scrollTo(top, { immediate: true });
+      // A native touch fling can move the viewport while Lenis still targets this anchor.
+      if (Math.abs(window.scrollY - top) > 0.5) window.scrollTo({ top, behavior: 'instant' });
+    };
+
+    const showcase = root.querySelector<HTMLElement>('#services');
+    const stage = showcase?.querySelector<HTMLElement>('.services-sticky');
+    if (showcase && stage) {
+      const servicesTrack = bindSlideTrack(showcase, stage, CEREMONY_SLIDES.length, renderService, alignPage);
+      selectService.current = servicesTrack.select;
+      cleanups.push(() => {
+        selectService.current = null;
+        servicesTrack.destroy();
+      });
+    }
+
+    // Keep the original plate, text and photo pan on the shared slide timing.
     const trackEl = numbersTrackRef.current;
-    const processPanel = trackEl?.firstElementChild;
+    const processPanel = trackEl?.querySelector<HTMLElement>('.stick');
     const plates = plateRefs.current.filter((el): el is HTMLDivElement => Boolean(el));
     const cards = cardRefs.current.filter((el): el is HTMLDivElement => Boolean(el));
     const fline = flineRef.current;
@@ -489,19 +508,8 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
       const ioCubic = (t: number) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-      let numbersRaf = 0;
-      let numbersVisible = false;
-
-      const numbersFrame = () => {
-        numbersRaf = 0;
-        const r = trackEl.getBoundingClientRect();
-        const span = Math.max(1, r.height - processPanel.clientHeight);
-        const p = clamp(-r.top / span) * n;
-        let P = 0;
-        for (let k = 1; k < n; k++) {
-          P += still ? (p >= k ? 1 : 0) : ioCubic(clamp((p - k + PROCESS_TRANSITION_WIDTH / 2) / PROCESS_TRANSITION_WIDTH));
-        }
-
+      const renderProcess = (from: number, to: number, t: number) => {
+        const P = from + (to - from) * ioCubic(t);
         const width = trackEl.clientWidth;
         const splitLayout = editorialLayout.matches;
         const slideDistance = width + Math.round(width * 0.018);
@@ -514,6 +522,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
 
         cards.forEach((c, k) => {
           const d = k - P;
+          c.setAttribute('aria-hidden', String(k !== Math.round(P)));
           c.style.visibility = splitLayout ? '' : Math.abs(d) >= 1 ? 'hidden' : 'visible';
           c.style.opacity = splitLayout ? clamp(1 - Math.abs(d) * 1.8).toFixed(3) : '';
           c.style.transform = splitLayout
@@ -528,37 +537,14 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
         }
       };
 
-      const scheduleNumbers = () => {
-        if (numbersVisible && !numbersRaf) {
-          numbersRaf = requestAnimationFrame(numbersFrame);
-        }
-      };
-
-      const numObserver = new IntersectionObserver(
-        (entries) => {
-          numbersVisible = entries[0]?.isIntersecting ?? false;
-          if (numbersVisible) scheduleNumbers();
-        },
-        { rootMargin: '120px 0px' }
-      );
-      numObserver.observe(trackEl);
-
-      window.addEventListener('scroll', scheduleNumbers, { passive: true });
-      window.addEventListener('resize', scheduleNumbers);
-      numbersRaf = requestAnimationFrame(numbersFrame);
-
-      cleanups.push(() => {
-        cancelAnimationFrame(numbersRaf);
-        numObserver.disconnect();
-        window.removeEventListener('scroll', scheduleNumbers);
-        window.removeEventListener('resize', scheduleNumbers);
-      });
+      const processTrack = bindSlideTrack(trackEl, processPanel, n, renderProcess, alignPage);
+      cleanups.push(processTrack.destroy);
     }
 
     return () => {
       cleanups.forEach((fn) => fn());
     };
-  }, []);
+  }, [renderService, selectService]);
 
   useEffect(() => {
     const followHash = () => scrollToAnchor(window.location.hash, true);

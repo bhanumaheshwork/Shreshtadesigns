@@ -6,9 +6,7 @@ import {
 } from './data/ceremonies';
 import { ShreshtaLandingPage } from './components/ShreshtaLandingPage';
 import { ceremonyServiceHref } from './data/siteNavigation';
-import { ceremonyStep } from './utils/ceremonyScroll';
 
-const TRANSITION_MS = 970;
 const COVER_TABLE: ReadonlyArray<readonly [number, number]> = [
   [0, 0], [0.031, 0.006], [0.134, 0.012], [0.206, 0.023],
   [0.278, 0.047], [0.34, 0.07], [0.412, 0.105], [0.485, 0.158],
@@ -99,8 +97,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
   const [wordLayouts, setWordLayouts] = useState<Record<string, WordLayout>>({});
   const [underline, setUnderline] = useState({ left: 0, width: 0, ready: false });
 
-  const showcaseRef = useRef<HTMLElement | null>(null);
-  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const selectService = useRef<((index: number) => void) | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
   const layerRefs = useRef<Array<Record<LayerName, HTMLDivElement | null>>>(
@@ -112,7 +109,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
       corner: null,
     }))
   );
-  const tabRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const measureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const uRef = useRef(1);
@@ -174,110 +171,33 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     syncUnderline(currentIndex);
   }, [currentIndex, isMobile, wordLayouts, syncUnderline]);
 
-  useLayoutEffect(() => {
-    const showcase = showcaseRef.current;
-    const sticky = stickyRef.current;
-    if (!showcase || !sticky) return;
+  const renderService = useCallback((from: number, to: number, progress: number) => {
+    const wiping = from !== to;
+    const direction = Math.sign(to - from);
+    const cover = sampleCover(progress);
+    const incomingProgress = easeOutQuad((progress - 0.5) / 0.42);
+    const frameWidth = 1440 * uRef.current;
+    slideRefs.current.forEach((slide, index) => {
+      if (!slide) return;
+      const visible = index === from || index === to;
+      slide.style.display = visible ? 'block' : 'none';
+      slide.style.zIndex = index === from ? '2' : '1';
+      slide.style.clipPath = wiping && index === from
+        ? direction > 0 ? `inset(0 ${cover * 100}% 0 0)` : `inset(0 0 0 ${cover * 100}%)`
+        : '';
 
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const slideCount = CEREMONY_SLIDES.length;
-    let scrollFrame = 0;
-    let animationFrame = 0;
-    let settled = -1;
-    let desired = 0;
-    let active = -1;
-    let transition: { from: number; to: number; elapsed: number; lastFrame: number } | undefined;
-
-    const renderSlides = (from: number, to: number, progress: number) => {
-      const wiping = from !== to;
-      const direction = Math.sign(to - from);
-      const cover = sampleCover(progress);
-      const incomingProgress = easeOutQuad((progress - 0.5) / 0.42);
-      const frameWidth = 1440 * uRef.current;
-      slideRefs.current.forEach((slide, index) => {
-        if (!slide) return;
-        const visible = index === from || index === to;
-        slide.style.display = visible ? 'block' : 'none';
-        slide.style.zIndex = index === from ? '2' : '1';
-        slide.style.clipPath = wiping && index === from
-          ? direction > 0 ? `inset(0 ${cover * 100}% 0 0)` : `inset(0 0 0 ${cover * 100}%)`
-          : '';
-
-        if (!visible) return;
-        for (const name of LAYER_NAMES) {
-          const layer = layerRefs.current[index][name];
-          if (!layer) continue;
-          const factor = index === from
-            ? -direction * 0.14 * cover
-            : direction * (1 - incomingProgress) * PARALLAX_FACTORS[name];
-          layer.style.transform = wiping ? `translateX(${factor * frameWidth}px)` : '';
-        }
-      });
-      const nextActive = cover < 0.5 ? from : to;
-      if (active !== nextActive) {
-        active = nextActive;
-        setCurrentIndex(active);
+      if (!visible) return;
+      for (const name of LAYER_NAMES) {
+        const layer = layerRefs.current[index][name];
+        if (!layer) continue;
+        const factor = index === from
+          ? -direction * 0.14 * cover
+          : direction * (1 - incomingProgress) * PARALLAX_FACTORS[name];
+        layer.style.transform = wiping ? `translateX(${factor * frameWidth}px)` : '';
       }
-    };
-
-    const animate = (now: number) => {
-      animationFrame = 0;
-      if (!transition) {
-        if (desired === settled) return;
-        transition = { from: settled, to: settled + Math.sign(desired - settled), elapsed: 0, lastFrame: now };
-      }
-
-      const { from, to, lastFrame } = transition;
-      const forward = Math.sign(desired - from) === Math.sign(to - from);
-      const elapsed = transition.elapsed + Math.max(0, now - lastFrame) * (forward ? 1 : -1);
-      transition.lastFrame = now;
-      transition.elapsed = elapsed;
-
-      if (elapsed >= TRANSITION_MS || (!forward && elapsed <= 0)) {
-        settled = forward ? to : from;
-        transition = undefined;
-        renderSlides(settled, settled, 0);
-      } else {
-        renderSlides(from, to, elapsed / TRANSITION_MS);
-      }
-
-      if (transition || desired !== settled) animationFrame = requestAnimationFrame(animate);
-    };
-
-    // Scroll selects the ceremony. The reference wipe has its own timing so a fast input
-    // cannot run the visual transition to completion in a single frame.
-    const updateSlides = () => {
-      scrollFrame = 0;
-      const { top, bottom } = showcase.getBoundingClientRect();
-      const position = -top / ceremonyStep(showcase, sticky);
-      desired = Math.min(slideCount - 1, Math.max(0, Math.floor(position + 0.275)));
-
-      if (settled < 0 || motion.matches || top >= window.innerHeight || bottom <= 0) {
-        if (animationFrame) cancelAnimationFrame(animationFrame);
-        animationFrame = 0;
-        if (transition || settled !== desired) renderSlides(desired, desired, 0);
-        settled = desired;
-        transition = undefined;
-      } else if (!animationFrame && settled !== desired) {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    const onScroll = () => {
-      if (!scrollFrame) scrollFrame = requestAnimationFrame(updateSlides);
-    };
-
-    updateSlides();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    motion.addEventListener('change', onScroll);
-    return () => {
-      cancelAnimationFrame(scrollFrame);
-      cancelAnimationFrame(animationFrame);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      motion.removeEventListener('change', onScroll);
-    };
+    });
+    const nextActive = cover < 0.5 ? from : to;
+    setCurrentIndex(nextActive);
   }, []);
 
   const activeSlide = CEREMONY_SLIDES[currentIndex];
@@ -285,13 +205,12 @@ export default function App({ logoSrc }: { logoSrc: string }) {
   const servicesSlider = (
     <section
       id="services"
-      ref={showcaseRef}
       className={`services-showcase${isMobile ? ' is-mobile' : ''}`}
       data-nav="light"
       aria-label="Wedding ceremony showcase"
       style={{ '--service-count': CEREMONY_SLIDES.length } as React.CSSProperties}
     >
-      <div ref={stickyRef} className="services-sticky">
+      <div className="services-sticky">
         <div ref={stageRef} className="hero-stage">
           {CEREMONY_SLIDES.map((slide, idx) => {
             const wordLayout = wordLayouts[slide.id] ?? {
@@ -487,9 +406,11 @@ export default function App({ logoSrc }: { logoSrc: string }) {
 
         <div className="hero-ui">
           <header className="hero-header">
-            <div className="hero-tabs" aria-label="Wedding ceremonies">
+            <div className="hero-tabs" role="group" aria-label="Wedding ceremonies">
               {CEREMONY_SLIDES.map((slide, idx) => (
-                <span
+                <button
+                  type="button"
+                  onClick={() => selectService.current?.(idx)}
                   key={slide.id}
                   ref={(el) => {
                     tabRefs.current[idx] = el;
@@ -498,7 +419,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
                   aria-current={idx === currentIndex ? 'true' : undefined}
                 >
                   {slide.name}
-                </span>
+                </button>
               ))}
               <div
                 className="hero-tab-underline"
@@ -523,5 +444,5 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     </section>
   );
 
-  return <ShreshtaLandingPage logoSrc={logoSrc} services={servicesSlider} />;
+  return <ShreshtaLandingPage logoSrc={logoSrc} services={servicesSlider} renderService={renderService} selectService={selectService} />;
 }
