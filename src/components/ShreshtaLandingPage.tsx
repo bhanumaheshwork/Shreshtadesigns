@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -13,12 +13,16 @@ import { CEREMONY_SLIDES } from '../data/ceremonies';
 import './ShreshtaLanding.css';
 
 gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  ScrollTrigger.config({ ignoreMobileResize: true });
+}
 
 interface ShreshtaLandingPageProps {
   logoSrc: string;
   services: React.ReactNode;
   renderService: (from: number, to: number, progress: number) => void;
   selectService: React.RefObject<((index: number) => void) | null>;
+  navigateSection?: React.RefObject<((targetId: string) => void) | null>;
 }
 
 const BANDS = 72;
@@ -41,6 +45,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
   services,
   renderService,
   selectService,
+  navigateSection,
 }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -50,6 +55,8 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const flineRef = useRef<HTMLHeadingElement | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
+  const selectProcessRef = useRef<((index: number) => void) | null>(null);
+  const [processIndex, setProcessIndex] = useState(0);
 
   const scrollToAnchor = useCallback((targetId: string, immediate = false) => {
     const sections = Array.from(rootRef.current?.querySelectorAll<HTMLElement>('#top, main > section') ?? []);
@@ -72,8 +79,15 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
   const handleHomeClick: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    if (window.location.hash !== '#top') window.history.pushState(null, '', '#top');
-    scrollToAnchor('#top');
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { duration: 1.1, immediate: reduce });
+    } else {
+      window.scrollTo({ top: 0, behavior: reduce ? 'instant' : 'smooth' });
+    }
   };
 
   // Landing page scroll reveals and section-local motion
@@ -522,8 +536,12 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
 
         cards.forEach((c, k) => {
           const d = k - P;
-          c.setAttribute('aria-hidden', String(k !== Math.round(P)));
-          c.style.visibility = splitLayout ? '' : Math.abs(d) >= 1 ? 'hidden' : 'visible';
+          const hidden = k !== Math.round(P);
+          c.setAttribute('aria-hidden', String(hidden));
+          c.style.pointerEvents = hidden ? 'none' : '';
+          c.style.visibility = splitLayout
+            ? Math.abs(d) >= 0.6 ? 'hidden' : 'visible'
+            : Math.abs(d) >= 1 ? 'hidden' : 'visible';
           c.style.opacity = splitLayout ? clamp(1 - Math.abs(d) * 1.8).toFixed(3) : '';
           c.style.transform = splitLayout
             ? `translateY(-50%) translateX(${(d * width * 0.5).toFixed(1)}px)`
@@ -535,10 +553,15 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
             ? clamp(1 - 4 * Math.abs(P - Math.round(P))).toFixed(3)
             : '';
         }
+        setProcessIndex(Math.max(0, Math.min(n - 1, Math.round(P))));
       };
 
       const processTrack = bindSlideTrack(trackEl, processPanel, n, renderProcess, alignPage);
-      cleanups.push(processTrack.destroy);
+      selectProcessRef.current = processTrack.select;
+      cleanups.push(() => {
+        selectProcessRef.current = null;
+        processTrack.destroy();
+      });
     }
 
     return () => {
@@ -547,11 +570,17 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
   }, [renderService, selectService]);
 
   useEffect(() => {
+    if (navigateSection) {
+      navigateSection.current = (targetId: string) => scrollToAnchor(targetId);
+    }
     const followHash = () => scrollToAnchor(window.location.hash, true);
     followHash();
     window.addEventListener('hashchange', followHash);
-    return () => window.removeEventListener('hashchange', followHash);
-  }, [scrollToAnchor]);
+    return () => {
+      if (navigateSection) navigateSection.current = null;
+      window.removeEventListener('hashchange', followHash);
+    };
+  }, [navigateSection, scrollToAnchor]);
 
   return (
     <div ref={rootRef} className="shreshta-landing">
@@ -723,6 +752,58 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
                   <p>{stage.story}</p>
                 </div>
               ))}
+              <button
+                type="button"
+                className="process-arrow process-arrow--prev"
+                aria-label={
+                  processIndex === 0
+                    ? 'Go to previous section: Services'
+                    : `Previous process stage: ${PROCESS_STAGES[processIndex - 1].title}`
+                }
+                onClick={() => {
+                  if (processIndex === 0) {
+                    scrollToAnchor('#services');
+                  } else {
+                    selectProcessRef.current?.(processIndex - 1);
+                  }
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M19 12H5M11 6l-6 6 6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="process-arrow process-arrow--next"
+                aria-label={
+                  processIndex === PROCESS_STAGES.length - 1
+                    ? 'Go to next section: Our approach'
+                    : `Next process stage: ${PROCESS_STAGES[processIndex + 1].title}`
+                }
+                onClick={() => {
+                  if (processIndex === PROCESS_STAGES.length - 1) {
+                    scrollToAnchor('#our-approach');
+                  } else {
+                    selectProcessRef.current?.(processIndex + 1);
+                  }
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </section>

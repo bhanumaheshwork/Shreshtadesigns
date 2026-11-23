@@ -212,11 +212,11 @@
 
 @media (max-width: 719px) {
   .shreshta-landing .hero {
-    min-height: 0;
+    min-height: 540px;
   }
 
   .shreshta-landing .hero h1 {
-    bottom: max(76px, 10svh);
+    bottom: max(84px, 11svh);
   }
 
   .shreshta-landing .hero .lede {
@@ -527,6 +527,52 @@
   top: 0;
   height: 100svh;
   overflow: hidden;
+  touch-action: pan-y;
+}
+
+.shreshta-landing .process-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 8;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(55, 27, 14, 0.08);
+  color: var(--ink);
+  cursor: pointer;
+  opacity: 0.88;
+  transition: background-color 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.shreshta-landing .process-arrow--prev {
+  left: 16px;
+}
+
+.shreshta-landing .process-arrow--next {
+  right: 16px;
+}
+
+.shreshta-landing .process-arrow svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.shreshta-landing .process-arrow:hover {
+  background: rgba(55, 27, 14, 0.16);
+  opacity: 1;
+}
+
+.shreshta-landing .process-arrow--prev:active {
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.shreshta-landing .process-arrow--next:active {
+  transform: translateY(-50%) translateX(2px);
 }
 
 .shreshta-landing .nums {
@@ -563,14 +609,17 @@
 
 .shreshta-landing .nums .pl-numeral {
   position: absolute;
-  left: 6%;
+  left: max(76px, 6.5%);
   top: 52%;
   transform: translateY(-50%) translateX(calc(var(--px, 0%) * 0.35));
-  font: 900 clamp(140px, 24vw, 340px) / 0.85 var(--serif);
+  font: 900 clamp(116px, 20vw, 280px) / 0.85 var(--serif);
   font-variation-settings: "opsz" 96;
   letter-spacing: -0.04em;
   color: var(--ink);
-  text-shadow: 0 18px 42px rgba(55, 27, 14, 0.16);
+  text-shadow:
+    0 2px 22px rgba(241, 223, 203, 0.96),
+    0 0 10px rgba(241, 223, 203, 0.88),
+    0 14px 36px rgba(55, 27, 14, 0.16);
   z-index: 4;
   user-select: none;
   pointer-events: none;
@@ -579,18 +628,18 @@
 @media (min-width: 720px) {
   .shreshta-landing .nums .pl-photo {
     inset: auto;
-    left: 22%;
-    top: calc(50% - 38vw * 1536 / 2752 / 2);
-    width: 34vw;
-    height: calc(38vw * 1536 / 2752);
+    left: 25%;
+    top: calc(50% - 36vw * 1536 / 2752 / 2);
+    width: 32vw;
+    height: calc(36vw * 1536 / 2752);
     transform: translateX(var(--px, 0%)) scale(1.06);
     -webkit-mask-image:
       linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent),
-      linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+      linear-gradient(90deg, transparent 0%, #000 20%, #000 88%, transparent);
     -webkit-mask-composite: source-in;
     mask-image:
       linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent),
-      linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+      linear-gradient(90deg, transparent 0%, #000 20%, #000 88%, transparent);
     mask-composite: intersect;
   }
 }
@@ -623,14 +672,14 @@
   position: absolute;
   left: var(--cx, 60%);
   top: var(--cy, 50%);
-  width: min(320px, 31vw);
+  width: min(320px, calc(40vw - 80px));
   transform: translateY(-50%);
   z-index: 6;
 }
 
 .shreshta-landing .card .n {
   font: 400 12px / 1 var(--mono);
-  color: rgba(55, 27, 14, 0.54);
+  color: rgba(55, 27, 14, 0.72);
   letter-spacing: 0.08em;
 }
 
@@ -705,7 +754,9 @@
     transform: translateY(-100%);
     color: var(--ink);
     font-size: clamp(62px, 22vw, 112px);
-    text-shadow: 0 2px 12px rgba(241, 223, 203, 0.65);
+    text-shadow:
+      0 2px 18px rgba(241, 223, 203, 0.96),
+      0 0 8px rgba(241, 223, 203, 0.9);
   }
 
   .shreshta-landing .card {
@@ -727,6 +778,27 @@
     margin-top: var(--s2);
     font-size: 15px;
     line-height: 1.6;
+  }
+
+  .shreshta-landing .process-arrow {
+    top: calc(var(--process-image-top) + var(--process-image-height) / 2);
+    width: 40px;
+    height: 40px;
+    background: rgba(250, 244, 234, 0.82);
+    box-shadow: 0 2px 10px rgba(55, 27, 14, 0.14);
+  }
+
+  .shreshta-landing .process-arrow--prev {
+    left: 8px;
+  }
+
+  .shreshta-landing .process-arrow--next {
+    right: 8px;
+  }
+
+  .shreshta-landing .process-arrow svg {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -765,9 +837,9 @@
 
 @media (min-width: 720px) and (max-width: 980px) and (orientation: portrait) {
   .shreshta-landing .nums .pl-photo {
-    left: 17%;
+    left: 22%;
     top: calc(50% - 12vw);
-    width: 41vw;
+    width: 36vw;
     height: 24vw;
   }
 }
@@ -1604,11 +1676,28 @@
 
 @media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
   .shreshta-landing {
-    --section-overlap: clamp(14px, 5svh, 40px);
+    --section-overlap: 0px;
+  }
+
+  .shreshta-landing.has-overlaps .overlap-sheet {
+    position: relative;
+    top: auto;
   }
 
   .shreshta-landing.has-overlaps main > section {
     box-shadow: none;
+  }
+
+  .shreshta-landing.has-overlaps :is(.hull, .services-showcase, .numbers, .salon, .trials) + section {
+    margin-top: 0;
+  }
+
+  .shreshta-landing.has-overlaps .hull .track {
+    height: 155svh;
+  }
+
+  .shreshta-landing.has-overlaps .hull + .services-showcase {
+    margin-top: 0;
   }
 }
 

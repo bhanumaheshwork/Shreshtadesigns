@@ -98,6 +98,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
   const [underline, setUnderline] = useState({ left: 0, width: 0, ready: false });
 
   const selectService = useRef<((index: number) => void) | null>(null);
+  const navigateSection = useRef<((targetId: string) => void) | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
   const layerRefs = useRef<Array<Record<LayerName, HTMLDivElement | null>>>(
@@ -433,6 +434,60 @@ export default function App({ logoSrc }: { logoSrc: string }) {
             </div>
           </header>
 
+          <button
+            type="button"
+            className="hero-arrow hero-arrow--prev"
+            aria-label={
+              currentIndex === 0
+                ? 'Go to previous section: Experiences'
+                : `Previous ceremony: ${CEREMONY_SLIDES[currentIndex - 1].name}`
+            }
+            onClick={() => {
+              if (currentIndex === 0) {
+                navigateSection.current?.('#experiences');
+              } else {
+                selectService.current?.(currentIndex - 1);
+              }
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M19 12H5M11 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            className="hero-arrow hero-arrow--next"
+            aria-label={
+              currentIndex === CEREMONY_SLIDES.length - 1
+                ? 'Go to next section: Our process'
+                : `Next ceremony: ${CEREMONY_SLIDES[currentIndex + 1].name}`
+            }
+            onClick={() => {
+              if (currentIndex === CEREMONY_SLIDES.length - 1) {
+                navigateSection.current?.('#numbers');
+              } else {
+                selectService.current?.(currentIndex + 1);
+              }
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M5 12h14M13 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
           <a
             href={ceremonyServiceHref(activeSlide.id)}
             className="hero-cta hero-ui-text"
@@ -444,5 +499,13 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     </section>
   );
 
-  return <ShreshtaLandingPage logoSrc={logoSrc} services={servicesSlider} renderService={renderService} selectService={selectService} />;
+  return (
+    <ShreshtaLandingPage
+      logoSrc={logoSrc}
+      services={servicesSlider}
+      renderService={renderService}
+      selectService={selectService}
+      navigateSection={navigateSection}
+    />
+  );
 }

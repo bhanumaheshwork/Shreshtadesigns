@@ -35,7 +35,7 @@ export function SiteNavigation({ logoSrc, activePage, onHomeClick }: SiteNavigat
       <nav className="nav" aria-label="Main">
         <a
           className="brand-link"
-          href="/#top"
+          href="/"
           onClick={(event) => {
             setMenuOpen(false);
             onHomeClick?.(event);

@@ -3,6 +3,7 @@ const TRANSITION_MS = 970;
 const COOLDOWN_MS = 1120;
 const WHEEL_IDLE_MS = 180;
 const GESTURE_THRESHOLD = 24;
+const HORIZONTAL_SWIPE_THRESHOLD = 28;
 
 type RenderSlide = (from: number, to: number, progress: number) => void;
 
@@ -21,8 +22,10 @@ export function bindSlideTrack(
   let readyAt = 0;
   let wheelTime = -Infinity;
   let wheelDistance = 0;
+  let wheelAxis: 'x' | 'y' | null = null;
   let wheelUsed = false;
-  let touchStart: Touch | undefined;
+  let touchStart: { x: number; y: number } | undefined;
+  let touchAxis: 'x' | 'y' | null = null;
   let touchOrigin = 0;
   let touchUsed = false;
   let lastInputWasTouch = false;
@@ -57,28 +60,29 @@ export function bindSlideTrack(
   }
 
   function select(next: number) {
+    const clamped = Math.max(0, Math.min(last, next));
     releaseEntry();
     entryDirection = 0;
     const { top, step } = bounds();
     const from = visible;
-    movePage(Math.round(top + step * next));
-    if (next === index) return;
+    movePage(Math.round(top + step * clamped));
+    if (clamped === index) return;
 
-    index = next;
+    index = clamped;
     const start = performance.now();
     readyAt = start + COOLDOWN_MS;
     cancelAnimationFrame(frame);
-    if (from === next || motion.matches) {
-      settle(next);
+    if (from === clamped || motion.matches) {
+      settle(clamped);
       return;
     }
     const animate = (now: number) => {
       const t = Math.min(1, (now - start) / TRANSITION_MS);
       if (t >= 1) {
-        settle(next);
+        settle(clamped);
       } else {
-        visible = t < 0.55 ? from : next;
-        render(from, next, t);
+        visible = t < 0.55 ? from : clamped;
+        render(from, clamped, t);
         frame = requestAnimationFrame(animate);
       }
     };
@@ -96,6 +100,10 @@ export function bindSlideTrack(
       }
       return;
     }
+    // Keep in-flight wipe animations uninterrupted unless the page jumps outside the track.
+    const outsideTrack = y < top - 48 || y > end + 48;
+    if (frame && !outsideTrack) return;
+
     // A native fling can enter from a neighbouring section after the finger lifts.
     // Land on the first (or last) panel and consume only that incoming gesture.
     if (entryDirection && performance.now() - entryTime < 1600 && y >= top && y <= end) {
@@ -120,10 +128,12 @@ export function bindSlideTrack(
   function isPinned(direction: number) {
     const { top, end } = bounds();
     const y = window.scrollY;
-    const pinned = y >= top - 1 && y <= end + 1;
-    entryDirection = !pinned && ((direction > 0 && y < top) || (direction < 0 && y > end))
-      ? direction : 0;
-    entryTime = performance.now();
+    const pinned = y >= top - 6 && y <= end + 6;
+    if (direction !== 0) {
+      entryDirection = !pinned && ((direction > 0 && y < top) || (direction < 0 && y > end))
+        ? direction : 0;
+      entryTime = performance.now();
+    }
     return pinned;
   }
 
@@ -138,19 +148,46 @@ export function bindSlideTrack(
   }
 
   function onWheel(event: WheelEvent) {
-    if (!isPageGesture(event) || event.ctrlKey || event.shiftKey ||
-        Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    if (!isPageGesture(event) || event.ctrlKey) return;
+    const absX = Math.abs(event.deltaX);
+    const absY = Math.abs(event.deltaY);
+    if (absX === 0 && absY === 0) return;
+
+    const horizontal = absX > absY || (event.shiftKey && absY > 0);
+    const axis: 'x' | 'y' = horizontal ? 'x' : 'y';
+    const rawDelta = absX > absY ? event.deltaX : event.deltaY;
+    const direction = Math.sign(rawDelta);
+    if (!direction) return;
+
     releaseEntry();
     lastInputWasTouch = false;
     const now = performance.now();
-    const direction = Math.sign(event.deltaY);
-    if (now - wheelTime > WHEEL_IDLE_MS || Math.sign(wheelDistance) !== direction) {
+    if (
+      now - wheelTime > WHEEL_IDLE_MS ||
+      wheelAxis !== axis ||
+      Math.sign(wheelDistance) !== direction
+    ) {
       wheelDistance = 0;
       wheelUsed = false;
+      wheelAxis = axis;
     }
     wheelTime = now;
+
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? panel.clientHeight : 1;
-    wheelDistance += event.deltaY * unit;
+    wheelDistance += rawDelta * unit;
+
+    if (horizontal) {
+      if (!isPinned(0)) return;
+      // Prevent browser horizontal back/forward navigation while browsing pinned slides.
+      event.preventDefault();
+      if (now < readyAt) wheelUsed = true;
+      if (!wheelUsed && Math.abs(wheelDistance) >= GESTURE_THRESHOLD) {
+        wheelUsed = true;
+        if (!atExit(direction)) select(index + direction);
+      }
+      return;
+    }
+
     if (!isPinned(direction)) return;
     if (!wheelUsed && now >= readyAt && atExit(direction)) return;
 
@@ -164,7 +201,13 @@ export function bindSlideTrack(
 
   function onTouchStart(event: TouchEvent) {
     releaseEntry();
-    touchStart = event.touches.length === 1 ? event.touches[0] : undefined;
+    if (event.touches.length === 1) {
+      const t = event.touches[0];
+      touchStart = { x: t.clientX, y: t.clientY };
+    } else {
+      touchStart = undefined;
+    }
+    touchAxis = null;
     touchOrigin = window.scrollY;
     lastInputWasTouch = true;
     touchUsed = false;
@@ -174,9 +217,31 @@ export function bindSlideTrack(
   function onTouchMove(event: TouchEvent) {
     if (!touchStart || event.touches.length !== 1 || !isPageGesture(event)) return;
     const touch = event.touches[0];
-    const dy = touchStart.clientY - touch.clientY;
-    if (Math.abs(dy) <= Math.abs(touchStart.clientX - touch.clientX)) return;
+    const dx = touchStart.x - touch.clientX;
+    const dy = touchStart.y - touch.clientY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (!touchAxis) {
+      if (absX < 8 && absY < 8) return;
+      touchAxis = absX > absY * 1.1 ? 'x' : 'y';
+    }
+
+    if (touchAxis === 'x') {
+      if (!isPinned(0)) return;
+      const direction = Math.sign(dx);
+      if (!direction) return;
+      event.preventDefault();
+      if (performance.now() < readyAt) touchUsed = true;
+      if (!touchUsed && absX >= HORIZONTAL_SWIPE_THRESHOLD) {
+        touchUsed = true;
+        if (!atExit(direction)) select(index + direction);
+      }
+      return;
+    }
+
     const direction = Math.sign(dy);
+    if (!direction) return;
     const { top, end } = bounds();
     const edge = direction > 0 ? top : end;
     const approach = (edge - touchOrigin) * direction;
@@ -184,7 +249,7 @@ export function bindSlideTrack(
       // Follow the finger up to the pin. Letting a native fling start this close
       // to the boundary can carry iOS past the introductory slide on release.
       event.preventDefault();
-      const travel = Math.min(approach, Math.abs(dy));
+      const travel = Math.min(approach, absY);
       entryDirection = 0;
       if (travel === approach) {
         touchUsed = true;
@@ -198,7 +263,7 @@ export function bindSlideTrack(
 
     event.preventDefault();
     if (performance.now() < readyAt) touchUsed = true;
-    if (!touchUsed && Math.abs(dy) >= GESTURE_THRESHOLD) {
+    if (!touchUsed && absY >= GESTURE_THRESHOLD) {
       touchUsed = true;
       select(index + direction);
     }
@@ -206,6 +271,7 @@ export function bindSlideTrack(
 
   function onTouchEnd() {
     touchStart = undefined;
+    touchAxis = null;
     if (touchEntry !== undefined) {
       releaseTimer = window.setTimeout(releaseEntry, WHEEL_IDLE_MS);
     }
@@ -215,6 +281,14 @@ export function bindSlideTrack(
     releaseEntry();
     entryDirection = 0;
     if (event.altKey || event.metaKey || event.ctrlKey || !isPageGesture(event)) return;
+    const horizontalKey = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (horizontalKey) {
+      if (!isPinned(0)) return;
+      if (atExit(horizontalKey)) return;
+      event.preventDefault();
+      if (!event.repeat && performance.now() >= readyAt) select(index + horizontalKey);
+      return;
+    }
     const direction = ['ArrowDown', 'PageDown'].includes(event.key) ? 1 :
       ['ArrowUp', 'PageUp'].includes(event.key) ? -1 : 0;
     if (!direction || !isPinned(direction)) return;
@@ -225,8 +299,10 @@ export function bindSlideTrack(
 
   function onResize() {
     measureSpan();
-    syncPosition();
-    if (!frame) render(index, index, 1);
+    if (!frame) {
+      syncPosition();
+      render(index, index, 1);
+    }
   }
 
   function clearEntry() { entryDirection = 0; releaseEntry(); }

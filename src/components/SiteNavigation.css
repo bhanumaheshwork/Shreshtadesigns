@@ -1,7 +1,9 @@
 /* Fixed Navigation */
 .site-navigation .nav {
   position: fixed;
-  inset: 0 0 auto 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: var(--nav, 64px);
   z-index: 40;
   display: grid;
@@ -9,24 +11,28 @@
   align-items: center;
   padding: 0 var(--pad, clamp(16px, 4vw, 56px));
   color: var(--ink, #371b0e);
-  transition: color 0.4s;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transition: color 0.35s ease;
 }
 
 .site-navigation .nav::before {
   content: "";
   position: absolute;
-  inset: 0 0 -24px 0;
+  inset: 0;
   z-index: -1;
-  background: linear-gradient(180deg, var(--navbg, rgba(250, 244, 234, 0.85)), transparent);
-  transition: background 0.35s ease, backdrop-filter 0.35s ease;
+  background: rgba(250, 244, 234, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(55, 27, 14, 0.08);
+  opacity: 0;
+  transition: opacity 0.3s ease, background-color 0.35s ease;
   pointer-events: none;
 }
 
 .shreshta-landing.is-scrolled .nav::before {
-  inset: 0;
-  background: rgba(250, 244, 234, 0.86);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  opacity: 1;
 }
 
 body[data-nav="dark"] .shreshta-landing .site-navigation .nav {
@@ -34,11 +40,8 @@ body[data-nav="dark"] .shreshta-landing .site-navigation .nav {
 }
 
 body[data-nav="dark"] .shreshta-landing .site-navigation .nav::before {
-  --navbg: rgba(55, 27, 14, 0.72);
-}
-
-body[data-nav="dark"] .shreshta-landing.is-scrolled .nav::before {
-  background: rgba(55, 27, 14, 0.84);
+  background: rgba(55, 27, 14, 0.88);
+  box-shadow: 0 1px 0 rgba(250, 244, 234, 0.1);
 }
 
 .site-navigation .nav .brand-link {
@@ -134,6 +137,10 @@ body[data-nav="dark"] .shreshta-landing.is-scrolled .nav::before {
   color: var(--ink, #371b0e);
 }
 
+.shreshta-landing .site-navigation.is-menu-open .nav::before {
+  opacity: 0;
+}
+
 @media (min-width: 720px) and (max-width: 980px) {
   .site-navigation .nav ul {
     gap: clamp(10px, 1.7vw, 18px);
@@ -156,12 +163,6 @@ body[data-nav="dark"] .shreshta-landing.is-scrolled .nav::before {
   .site-navigation .nav .menu {
     display: block;
     grid-column: 2;
-  }
-  .site-navigation .nav::before {
-    --navbg: rgba(250, 244, 234, 0.92);
-  }
-  body[data-nav="dark"] .shreshta-landing .site-navigation .nav::before {
-    --navbg: rgba(55, 27, 14, 0.86);
   }
 }
 

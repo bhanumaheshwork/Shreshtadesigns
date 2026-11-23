@@ -85,6 +85,7 @@ html.is-overlay-open {
   top: 0;
   height: var(--services-viewport);
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .hero-stage {
@@ -299,6 +300,52 @@ html.is-overlay-open {
   opacity: 0.84;
 }
 
+.hero-ui .hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(52 * var(--n));
+  height: calc(52 * var(--n));
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(55, 27, 14, 0.06);
+  color: var(--color-foreground);
+  opacity: 0.88;
+  transition: background-color 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.hero-ui .hero-arrow--prev {
+  left: calc(36 * var(--n));
+}
+
+.hero-ui .hero-arrow--next {
+  right: calc(36 * var(--n));
+}
+
+.hero-ui .hero-arrow svg {
+  width: calc(24 * var(--n));
+  height: calc(24 * var(--n));
+  min-width: 20px;
+  min-height: 20px;
+  display: block;
+}
+
+.hero-ui .hero-arrow:hover {
+  background: rgba(55, 27, 14, 0.13);
+  opacity: 1;
+}
+
+.hero-ui .hero-arrow--prev:active {
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.hero-ui .hero-arrow--next:active {
+  transform: translateY(-50%) translateX(2px);
+}
+
 /* Compact layout for phones */
 .is-mobile .hero-header {
   left: 20px;
@@ -325,6 +372,24 @@ html.is-overlay-open {
   font-size: 15px;
   bottom: 22px;
   padding: 10px 16px;
+}
+
+.is-mobile .hero-arrow {
+  width: 44px;
+  height: 44px;
+}
+
+.is-mobile .hero-arrow--prev {
+  left: 12px;
+}
+
+.is-mobile .hero-arrow--next {
+  right: 12px;
+}
+
+.is-mobile .hero-arrow svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Reduced motion */

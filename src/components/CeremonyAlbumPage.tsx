@@ -97,7 +97,7 @@ export const CeremonyAlbumPage: React.FC<CeremonyAlbumPageProps> = ({
     >
       <header className="ceremony-page__header">
         <div className="ceremony-page__nav ceremony-album__nav">
-          <a href="/#top" className="ceremony-page__logo" aria-label={`${BRAND_NAME} home`}>
+          <a href="/" className="ceremony-page__logo" aria-label={`${BRAND_NAME} home`}>
             <img src={logoSrc} alt="" />
           </a>
 
