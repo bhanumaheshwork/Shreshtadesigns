@@ -69,7 +69,9 @@ function computeWordLayout(
     baseInkWidth = Math.max(metrics.width, left + right);
   }
 
-  const visibleDesignWidth = isMobile ? Math.min(1440, vw / Math.max(0.01, u)) * 0.92 : 1240;
+  const visibleDesignWidth = isMobile
+    ? Math.min(1160, (vw / Math.max(0.01, u)) * 0.84)
+    : 1240;
   const maxInkWidth = isMobile ? visibleDesignWidth : 1280;
 
   const defaultSize = 445;
@@ -117,12 +119,13 @@ export default function App({ logoSrc }: { logoSrc: string }) {
   // Compute --u, --n, --fy, mobile breakpoint, and giant word sizes
   const recomputeLayout = useCallback(() => {
     const vw = window.innerWidth;
-    const vh = stageRef.current?.clientHeight ?? window.innerHeight;
     const mobile = vw < 720;
+    const stageW = stageRef.current?.clientWidth || vw;
+    const stageH = stageRef.current?.clientHeight || (mobile ? (stageW * 9) / 16 : window.innerHeight);
     const u = mobile
-      ? Math.min(vw / 640, Math.max(120, vh - 200) / 620)
-      : Math.min(vw / 1440, vh / 900);
-    const fy = mobile ? 8 : 0;
+      ? Math.min(stageW / 1440, stageH / 900)
+      : Math.min(vw / 1440, stageH / 900);
+    const fy = 0;
 
     uRef.current = u;
     document.documentElement.style.setProperty('--u', `${u}px`);
@@ -140,7 +143,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     const ctx = measureCanvasRef.current.getContext('2d');
     const layouts: Record<string, WordLayout> = {};
     for (const slide of CEREMONY_SLIDES) {
-      layouts[slide.id] = computeWordLayout(slide.name, ctx, mobile, vw, u);
+      layouts[slide.id] = computeWordLayout(slide.name, ctx, mobile, stageW, u);
     }
     setWordLayouts(layouts);
   }, []);

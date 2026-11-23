@@ -4,20 +4,18 @@ import { findPage, legacyPageHref } from './data/pages';
 import { renderPage } from './renderPage';
 import './index.css';
 
-async function start() {
+function start() {
   if (location.pathname === '/') {
-    const redirectLegacyLink = () => {
-      const href = legacyPageHref(location.hash);
-      if (href) location.replace(href);
-      return Boolean(href);
-    };
-    if (redirectLegacyLink()) return;
-    window.addEventListener('hashchange', redirectLegacyLink);
+    const href = legacyPageHref(location.hash);
+    if (href) {
+      location.replace(href);
+      return;
+    }
   }
 
   const root = document.getElementById('root')!;
   const page = findPage(location.pathname);
-  const content = await renderPage(page);
+  const content = renderPage(page);
   if (root.hasChildNodes()) {
     hydrateRoot(root, content);
   } else {
@@ -26,4 +24,4 @@ async function start() {
   }
 }
 
-void start();
+start();

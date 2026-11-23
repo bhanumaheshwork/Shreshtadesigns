@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 import { BRAND_NAME } from '../data/brand';
-import { CEREMONY_SLIDES, type CeremonyId, type CeremonySlide } from '../data/ceremonies';
+import { CEREMONY_SLIDES, type CeremonySlide } from '../data/ceremonies';
 import { ceremonyAlbumHref, ceremonyServiceHref } from '../data/siteNavigation';
 import './CeremonyPage.css';
 
@@ -67,15 +67,36 @@ function CeremonySection({ slide, priority }: { slide: CeremonySlide; priority: 
   );
 }
 
-export function ServicesPage({ logoSrc }: { logoSrc: string }) {
+export function ServicesPage({
+  logoSrc,
+  hash = '',
+  transitionKey = 0,
+}: {
+  logoSrc: string;
+  hash?: string;
+  transitionKey?: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     let frame = 0;
     const restoreChapter = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const chapter = document.getElementById(location.hash.slice(1));
+      const activeHash = hash || location.hash;
+      const targetId = activeHash.slice(1);
+      if (targetId) {
+        const chapter = document.getElementById(targetId);
         if (chapter?.classList.contains('services-page__chapter')) {
           chapter.scrollIntoView({ block: 'start', behavior: 'instant' });
+          return;
+        }
+      }
+      frame = requestAnimationFrame(() => {
+        const chapter = targetId ? document.getElementById(targetId) : null;
+        if (chapter?.classList.contains('services-page__chapter')) {
+          chapter.scrollIntoView({ block: 'start', behavior: 'instant' });
+        } else {
+          containerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
         }
       });
     };
@@ -85,10 +106,11 @@ export function ServicesPage({ logoSrc }: { logoSrc: string }) {
       cancelAnimationFrame(frame);
       window.removeEventListener('pageshow', restoreChapter);
     };
-  }, []);
+  }, [hash]);
 
   return (
     <div
+      ref={containerRef}
       className="ceremony-page services-page"
       role="region"
       aria-labelledby="services-page-title"
@@ -105,7 +127,11 @@ export function ServicesPage({ logoSrc }: { logoSrc: string }) {
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="ceremony-page__content">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={`ceremony-page__content${transitionKey ? ' route-transition-in' : ''}`}
+      >
         <h1 className="sr-only" id="services-page-title">Wedding planning and design services in Hyderabad</h1>
         {CEREMONY_SLIDES.map((slide) => (
           <CeremonySection key={slide.id} slide={slide} priority={slide.id === CEREMONY_SLIDES[0].id} />

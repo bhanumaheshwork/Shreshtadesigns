@@ -194,13 +194,22 @@ const pages = {
   enquire: Enquire,
 };
 
-export function StudioPage({ page, logoSrc }: { page: StudioLink; logoSrc: string }) {
+export function StudioPage({
+  page,
+  logoSrc,
+  transitionKey = 0,
+}: {
+  page: StudioLink;
+  logoSrc: string;
+  transitionKey?: number;
+}) {
   const pageRef = useRef<HTMLDivElement>(null);
   const Content = pages[page.id];
 
   useEffect(() => {
     const scroller = pageRef.current;
     if (!scroller) return;
+    scroller.scrollTo({ top: 0, behavior: 'instant' });
     scroller.focus({ preventScroll: true });
 
     const media = gsap.matchMedia(scroller);
@@ -232,7 +241,12 @@ export function StudioPage({ page, logoSrc }: { page: StudioLink; logoSrc: strin
       aria-labelledby="studio-page-title"
     >
       <SiteNavigation logoSrc={logoSrc} activePage={page} />
-      <main id="main-content" tabIndex={-1} className="ceremony-page__content">
+      <main
+        key={page.id}
+        id="main-content"
+        tabIndex={-1}
+        className={`ceremony-page__content${transitionKey ? ' route-transition-in' : ''}`}
+      >
         <Content title={page.label} />
       </main>
     </div>

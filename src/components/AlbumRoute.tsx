@@ -1,14 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CeremonyId, CeremonySlide } from '../data/ceremonies';
 import { ceremonyServiceHref } from '../data/siteNavigation';
+import { navigate } from '../utils/router';
 import { CeremonyAlbumPage } from './CeremonyAlbumPage';
 import { InquiryModal } from './ServiceOverlays';
 
-export function AlbumRoute({ slide, logoSrc }: { slide: CeremonySlide; logoSrc: string }) {
+export function AlbumRoute({
+  slide,
+  logoSrc,
+  transitionKey = 0,
+}: {
+  slide: CeremonySlide;
+  logoSrc: string;
+  transitionKey?: number;
+}) {
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
+  useEffect(() => {
+    setInquiryOpen(false);
+  }, [slide.id]);
+
   function openDetails(id: CeremonyId) {
-    window.location.assign(ceremonyServiceHref(id));
+    navigate(ceremonyServiceHref(id));
   }
 
   return (
@@ -17,6 +30,7 @@ export function AlbumRoute({ slide, logoSrc }: { slide: CeremonySlide; logoSrc: 
         slide={slide}
         logoSrc={logoSrc}
         inquiryOpen={inquiryOpen}
+        transitionKey={transitionKey}
         onBackToCeremony={openDetails}
         onOpenInquiry={() => setInquiryOpen(true)}
       />

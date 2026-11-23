@@ -1,0 +1,248 @@
+import { findPage, legacyPageHref, type SitePage } from '../data/pages';
+
+export type NavigationType = 'initial' | 'push' | 'replace' | 'pop';
+
+export interface RouteState {
+  pathname: string;
+  search: string;
+  hash: string;
+  page: SitePage;
+  key: number;
+  navigationType: NavigationType;
+}
+
+type RouteListener = (state: RouteState) => void;
+
+const listeners = new Set<RouteListener>();
+const prefetchedImages = new Set<string>();
+const ASSET_EXT_RE = /\.(?:webp|png|jpe?g|gif|svg|ico|avif|css|js|mjs|json|xml|txt|pdf|woff2?)$/i;
+
+let routeCounter = 0;
+let dispatchingHash = false;
+
+function resolveCanonicalPath(pathname: string, page: SitePage): string {
+  return page.kind === 'missing' ? pathname : page.path;
+}
+
+export function createRouteState(
+  pathname: string,
+  search: string,
+  hash: string,
+  navigationType: NavigationType,
+): RouteState {
+  const page = findPage(pathname);
+  return {
+    pathname: resolveCanonicalPath(pathname, page),
+    search,
+    hash,
+    page,
+    key: navigationType === 'initial' ? 0 : ++routeCounter,
+    navigationType,
+  };
+}
+
+export function getBrowserRoute(navigationType: NavigationType = 'initial'): RouteState {
+  return createRouteState(
+    window.location.pathname,
+    window.location.search,
+    window.location.hash,
+    navigationType,
+  );
+}
+
+function notify(state: RouteState) {
+  listeners.forEach((listener) => listener(state));
+}
+
+export function subscribeRoute(listener: RouteListener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function scrollActivePageToTop() {
+  const scroller = document.querySelector<HTMLElement>('.ceremony-page');
+  if (scroller) {
+    scroller.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+export function isInternalPageUrl(url: URL): boolean {
+  if (typeof window === 'undefined') return false;
+  if (url.origin !== window.location.origin) return false;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  if (url.pathname.startsWith('/api/')) return false;
+  if (ASSET_EXT_RE.test(url.pathname)) return false;
+  return true;
+}
+
+export function prefetchRoute(href: string) {
+  if (typeof window === 'undefined') return;
+  let url: URL;
+  try {
+    url = new URL(href, window.location.origin);
+  } catch {
+    return;
+  }
+  if (!isInternalPageUrl(url)) return;
+  const page = findPage(url.pathname);
+  if (page.kind === 'missing' || !page.image || prefetchedImages.has(page.image)) return;
+  prefetchedImages.add(page.image);
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = page.image;
+}
+
+export function navigate(to: string, options?: { replace?: boolean }) {
+  if (typeof window === 'undefined') return;
+
+  let url: URL;
+  try {
+    url = new URL(to, window.location.origin);
+  } catch {
+    window.location.assign(to);
+    return;
+  }
+
+  if (!isInternalPageUrl(url)) {
+    window.location.assign(to);
+    return;
+  }
+
+  const targetPage = findPage(url.pathname);
+  const targetPathname = resolveCanonicalPath(url.pathname, targetPage);
+  const targetFull = `${targetPathname}${url.search}${url.hash}`;
+
+  const currentPage = findPage(window.location.pathname);
+  const currentPathname = resolveCanonicalPath(window.location.pathname, currentPage);
+  const sameDocument =
+    targetPathname === currentPathname && url.search === window.location.search;
+
+  if (sameDocument) {
+    if (url.hash === window.location.hash) {
+      if (!url.hash) {
+        scrollActivePageToTop();
+      } else {
+        const targetEl = document.getElementById(url.hash.slice(1));
+        targetEl?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
+      return;
+    }
+
+    if (options?.replace) {
+      window.history.replaceState(null, '', targetFull);
+    } else {
+      window.history.pushState(null, '', targetFull);
+    }
+    notify(createRouteState(targetPathname, url.search, url.hash, options?.replace ? 'replace' : 'push'));
+    dispatchingHash = true;
+    try {
+      window.dispatchEvent(new Event('hashchange'));
+    } finally {
+      dispatchingHash = false;
+    }
+    return;
+  }
+
+  if (!url.hash) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }
+
+  if (options?.replace) {
+    window.history.replaceState(null, '', targetFull);
+  } else {
+    window.history.pushState(null, '', targetFull);
+  }
+
+  notify(createRouteState(targetPathname, url.search, url.hash, options?.replace ? 'replace' : 'push'));
+}
+
+function findAnchorFromEvent(event: Event): HTMLAnchorElement | null {
+  const target = event.target;
+  if (!(target instanceof Element)) return null;
+  return target.closest<HTMLAnchorElement>('a[href]');
+}
+
+export function installRouter(): () => void {
+  const handleClick = (event: MouseEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const anchor = findAnchorFromEvent(event);
+    if (!anchor) return;
+    if (anchor.hasAttribute('download')) return;
+    const targetAttr = anchor.getAttribute('target');
+    if (targetAttr && targetAttr !== '_self') return;
+
+    const rawHref = anchor.getAttribute('href');
+    if (!rawHref || rawHref.startsWith('#')) return;
+
+    let url: URL;
+    try {
+      url = new URL(anchor.href, window.location.origin);
+    } catch {
+      return;
+    }
+
+    if (!isInternalPageUrl(url)) return;
+
+    event.preventDefault();
+    navigate(`${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const handlePrefetch = (event: Event) => {
+    const anchor = findAnchorFromEvent(event);
+    if (!anchor) return;
+    const rawHref = anchor.getAttribute('href');
+    if (!rawHref || rawHref.startsWith('#')) return;
+    prefetchRoute(anchor.href);
+  };
+
+  const handlePopState = () => {
+    if (window.location.pathname === '/') {
+      const legacy = legacyPageHref(window.location.hash);
+      if (legacy) {
+        navigate(legacy, { replace: true });
+        return;
+      }
+    }
+    notify(getBrowserRoute('pop'));
+  };
+
+  const handleHashChange = () => {
+    if (dispatchingHash) return;
+    if (window.location.pathname === '/') {
+      const legacy = legacyPageHref(window.location.hash);
+      if (legacy) {
+        navigate(legacy, { replace: true });
+        return;
+      }
+    }
+    notify(getBrowserRoute('pop'));
+  };
+
+  document.addEventListener('click', handleClick);
+  document.addEventListener('pointerenter', handlePrefetch, true);
+  document.addEventListener('touchstart', handlePrefetch, { passive: true, capture: true });
+  window.addEventListener('popstate', handlePopState);
+  window.addEventListener('hashchange', handleHashChange);
+
+  return () => {
+    document.removeEventListener('click', handleClick);
+    document.removeEventListener('pointerenter', handlePrefetch, true);
+    document.removeEventListener('touchstart', handlePrefetch, true);
+    window.removeEventListener('popstate', handlePopState);
+    window.removeEventListener('hashchange', handleHashChange);
+  };
+}

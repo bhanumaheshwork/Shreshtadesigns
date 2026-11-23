@@ -28,9 +28,30 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  background-color: #faf4ea;
+  color: #371b0e;
   font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes route-surface-in {
+  from {
+    opacity: 0.92;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.route-transition-in {
+  animation: route-surface-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-transition-in {
+    animation: none;
+  }
 }
 
 html.is-overlay-open {
@@ -346,50 +367,125 @@ html.is-overlay-open {
   transform: translateY(-50%) translateX(2px);
 }
 
-/* Compact layout for phones */
-.is-mobile .hero-header {
-  left: 20px;
-  right: 20px;
-  top: 16px;
-  height: 40px;
-}
+/* 16:9 landscape layout with sticky scroll gestures for phones */
+@media (max-width: 719px) {
+  .shreshta-landing .services-showcase {
+    --services-viewport: max(480px, 100svh);
+    --service-step: clamp(220px, 44svh, 380px);
+    height: calc(var(--services-viewport) + var(--service-count) * var(--service-step));
+    scroll-margin-top: 0;
+  }
 
-.is-mobile .hero-tabs {
-  top: 52px;
-  gap: clamp(10px, 3vw, 18px);
-}
+  .shreshta-landing .services-sticky {
+    position: sticky;
+    top: 0;
+    height: var(--services-viewport);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-content: center;
+    padding: var(--nav, 64px) 0 16px;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
 
-.is-mobile .hero-tab {
-  font-size: clamp(11.5px, 3.1vw, 14px);
-  padding: 6px 0;
-}
+  .shreshta-landing .services-showcase .hero-stage {
+    grid-row: 2;
+    grid-column: 1;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
 
-.is-mobile .hero-tab-underline {
-  bottom: -2px;
-}
+  .shreshta-landing .services-showcase .hero-ui {
+    display: contents;
+  }
 
-.is-mobile .hero-cta {
-  font-size: 15px;
-  bottom: 22px;
-  padding: 10px 16px;
-}
+  .shreshta-landing .services-showcase .hero-header {
+    grid-row: 1;
+    grid-column: 1;
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    height: auto;
+    justify-content: center;
+    padding: 0 12px 14px;
+  }
 
-.is-mobile .hero-arrow {
-  width: 44px;
-  height: 44px;
-}
+  .shreshta-landing .services-showcase .hero-tabs {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    justify-content: center;
+    gap: clamp(10px, 3.2vw, 18px);
+  }
 
-.is-mobile .hero-arrow--prev {
-  left: 12px;
-}
+  .shreshta-landing .services-showcase .hero-tab {
+    font-size: clamp(11.5px, 3.1vw, 14px);
+    padding: 6px 0;
+  }
 
-.is-mobile .hero-arrow--next {
-  right: 12px;
-}
+  .shreshta-landing .services-showcase .hero-tab-underline {
+    bottom: -2px;
+  }
 
-.is-mobile .hero-arrow svg {
-  width: 20px;
-  height: 20px;
+  .shreshta-landing .services-showcase .hero-cta {
+    grid-row: 3;
+    grid-column: 1;
+    justify-self: center;
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    margin-top: 14px;
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow {
+    grid-row: 2;
+    grid-column: 1;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    align-self: center;
+    transform: none;
+    z-index: 10;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow--prev {
+    justify-self: start;
+    margin-left: 10px;
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow--next {
+    justify-self: end;
+    margin-right: 10px;
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow svg {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow--prev:active {
+    transform: translateX(-2px);
+  }
+
+  .shreshta-landing .services-showcase .hero-arrow--next:active {
+    transform: translateX(2px);
+  }
 }
 
 /* Reduced motion */

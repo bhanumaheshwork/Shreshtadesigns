@@ -26,7 +26,6 @@ export function bindSlideTrack(
   let wheelUsed = false;
   let touchStart: { x: number; y: number } | undefined;
   let touchAxis: 'x' | 'y' | null = null;
-  let touchOrigin = 0;
   let touchUsed = false;
   let lastInputWasTouch = false;
   let entryDirection = 0;
@@ -128,7 +127,7 @@ export function bindSlideTrack(
   function isPinned(direction: number) {
     const { top, end } = bounds();
     const y = window.scrollY;
-    const pinned = y >= top - 6 && y <= end + 6;
+    const pinned = y >= top - 12 && y <= end + 12;
     if (direction !== 0) {
       entryDirection = !pinned && ((direction > 0 && y < top) || (direction < 0 && y > end))
         ? direction : 0;
@@ -208,7 +207,6 @@ export function bindSlideTrack(
       touchStart = undefined;
     }
     touchAxis = null;
-    touchOrigin = window.scrollY;
     lastInputWasTouch = true;
     touchUsed = false;
     entryDirection = 0;
@@ -242,22 +240,6 @@ export function bindSlideTrack(
 
     const direction = Math.sign(dy);
     if (!direction) return;
-    const { top, end } = bounds();
-    const edge = direction > 0 ? top : end;
-    const approach = (edge - touchOrigin) * direction;
-    if (approach > 1 && approach <= window.innerHeight && !touchUsed) {
-      // Follow the finger up to the pin. Letting a native fling start this close
-      // to the boundary can carry iOS past the introductory slide on release.
-      event.preventDefault();
-      const travel = Math.min(approach, absY);
-      entryDirection = 0;
-      if (travel === approach) {
-        touchUsed = true;
-        settle(direction > 0 ? 0 : last);
-      }
-      movePage(Math.round(touchOrigin + direction * travel));
-      return;
-    }
     if (!isPinned(direction)) return;
     if (!touchUsed && performance.now() >= readyAt && atExit(direction)) return;
 
@@ -332,3 +314,4 @@ export function bindSlideTrack(
     },
   };
 }
+

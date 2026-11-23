@@ -17,6 +17,10 @@ export function SiteNavigation({ logoSrc, activePage, onHomeClick }: SiteNavigat
   const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    setMenuOpen(false);
+  }, [activePage?.href]);
+
+  useEffect(() => {
     if (!menuOpen) return;
     drawerRef.current?.querySelector('a')?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {

@@ -23,6 +23,7 @@ interface CeremonyAlbumPageProps {
   slide: CeremonySlide;
   logoSrc: string;
   inquiryOpen: boolean;
+  transitionKey?: number;
   onBackToCeremony: (ceremonyId: CeremonyId) => void;
   onOpenInquiry: (ceremonyId: CeremonyId) => void;
 }
@@ -31,6 +32,7 @@ export const CeremonyAlbumPage: React.FC<CeremonyAlbumPageProps> = ({
   slide,
   logoSrc,
   inquiryOpen,
+  transitionKey = 0,
   onBackToCeremony,
   onOpenInquiry,
 }) => {
@@ -129,7 +131,12 @@ export const CeremonyAlbumPage: React.FC<CeremonyAlbumPageProps> = ({
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="ceremony-page__content ceremony-album__content">
+      <main
+        key={slide.id}
+        id="main-content"
+        tabIndex={-1}
+        className={`ceremony-page__content ceremony-album__content${transitionKey ? ' route-transition-in' : ''}`}
+      >
         <div className="ceremony-album__intro">
           <h1>{slide.name} Album</h1>
           <p className="ceremony-page__lead">{slide.album.storyLead}</p>
