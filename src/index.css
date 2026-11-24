@@ -367,24 +367,22 @@ html.is-overlay-open {
   transform: translateY(-50%) translateX(2px);
 }
 
-/* 16:9 landscape layout with sticky scroll gestures for phones */
+/* 16:9 landscape layout with compact scroll-gesture capture for phones */
 @media (max-width: 719px) {
   .shreshta-landing .services-showcase {
-    --services-viewport: max(480px, 100svh);
-    --service-step: clamp(220px, 44svh, 380px);
-    height: calc(var(--services-viewport) + var(--service-count) * var(--service-step));
-    scroll-margin-top: 0;
+    height: auto;
+    scroll-margin-top: var(--nav, 64px);
   }
 
   .shreshta-landing .services-sticky {
-    position: sticky;
-    top: 0;
-    height: var(--services-viewport);
+    position: relative;
+    top: auto;
+    height: auto;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto;
     align-content: center;
-    padding: var(--nav, 64px) 0 16px;
+    padding: 20px 0 22px;
     overflow: hidden;
     touch-action: pan-y;
   }
@@ -412,7 +410,7 @@ html.is-overlay-open {
     top: auto;
     height: auto;
     justify-content: center;
-    padding: 0 12px 14px;
+    padding: 0 12px 12px;
   }
 
   .shreshta-landing .services-showcase .hero-tabs {
@@ -441,9 +439,9 @@ html.is-overlay-open {
     left: auto;
     bottom: auto;
     transform: none;
-    margin-top: 14px;
+    margin-top: 10px;
     font-size: 13px;
-    padding: 10px 16px;
+    padding: 8px 16px;
   }
 
   .shreshta-landing .services-showcase .hero-arrow {

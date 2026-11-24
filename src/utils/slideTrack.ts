@@ -1,9 +1,10 @@
-// Both sticky slideshows use the same gesture cadence. The cooldown starts with the wipe.
-const TRANSITION_MS = 380;
-const COOLDOWN_MS = 420;
-const WHEEL_IDLE_MS = 120;
-const GESTURE_THRESHOLD = 16;
-const HORIZONTAL_SWIPE_THRESHOLD = 18;
+// Both slideshows share the same 980ms gesture cadence. The cooldown starts with the wipe.
+const TRANSITION_MS = 980;
+const COOLDOWN_MS = 980;
+const WHEEL_IDLE_MS = 180;
+const GESTURE_THRESHOLD = 24;
+const HORIZONTAL_SWIPE_THRESHOLD = 28;
+const NAV_HEIGHT = 64;
 
 type RenderSlide = (from: number, to: number, progress: number) => void;
 
@@ -33,12 +34,14 @@ export function bindSlideTrack(
   let touchEntry: number | undefined;
   let releaseTimer = 0;
   const followingSection = track.closest('section')?.nextElementSibling;
+  let compact = false;
   let span = 0;
 
   function measureSpan() {
     const overlap = followingSection ? Math.min(0, parseFloat(getComputedStyle(followingSection).marginTop) || 0) : 0;
+    compact = track.offsetHeight <= panel.offsetHeight + 4;
     // End the pin before the following section starts covering the final panel.
-    span = Math.max(1, track.offsetHeight - panel.offsetHeight + overlap);
+    span = compact ? 0 : Math.max(1, track.offsetHeight - panel.offsetHeight + overlap);
   }
 
   function releaseEntry() {
@@ -47,8 +50,14 @@ export function bindSlideTrack(
   }
 
   function bounds() {
-    const top = Math.round(window.scrollY + track.getBoundingClientRect().top);
-    return { top, end: top + span, step: span / last };
+    const rectTop = Math.round(window.scrollY + track.getBoundingClientRect().top);
+    if (compact) {
+      const secHeight = track.offsetHeight;
+      const available = Math.max(secHeight, window.innerHeight - NAV_HEIGHT);
+      const anchor = Math.max(0, Math.round(rectTop - NAV_HEIGHT - (available - secHeight) / 2));
+      return { top: anchor, end: anchor, step: 0 };
+    }
+    return { top: rectTop, end: rectTop + span, step: span / last };
   }
 
   function settle(next: number) {
@@ -100,23 +109,46 @@ export function bindSlideTrack(
       return;
     }
     // Keep in-flight wipe animations uninterrupted unless the page jumps outside the track.
-    const outsideTrack = y < top - 48 || y > end + 48;
+    const outsideTrack = compact ? Math.abs(y - top) > 96 : y < top - 48 || y > end + 48;
     if (frame && !outsideTrack) return;
 
     // A native fling can enter from a neighbouring section after the finger lifts.
     // Land on the first (or last) panel and consume only that incoming gesture.
-    if (entryDirection && performance.now() - entryTime < 1600 && y >= top && y <= end) {
-      const first = entryDirection > 0;
-      entryDirection = 0;
-      wheelUsed = touchUsed = true;
-      settle(first ? 0 : last);
-      if (lastInputWasTouch) {
-        touchEntry = first ? top : end;
-        if (!touchStart) releaseTimer = window.setTimeout(releaseEntry, WHEEL_IDLE_MS);
+    if (entryDirection && performance.now() - entryTime < 1600) {
+      const captureWindow = Math.max(360, window.innerHeight);
+      const entered = compact
+        ? entryDirection > 0
+          ? y >= top - 12 && y <= top + captureWindow
+          : y <= top + 12 && y >= top - captureWindow
+        : y >= top && y <= end;
+      if (entered) {
+        const first = entryDirection > 0;
+        entryDirection = 0;
+        wheelUsed = touchUsed = true;
+        settle(first ? 0 : last);
+        const anchor = compact ? top : first ? top : end;
+        if (lastInputWasTouch) {
+          touchEntry = anchor;
+          if (!touchStart) releaseTimer = window.setTimeout(releaseEntry, WHEEL_IDLE_MS);
+        }
+        movePage(anchor);
+        return;
       }
-      movePage(first ? top : end);
+    }
+
+    if (compact) {
+      if (index === -1) {
+        settle(y > top + 28 ? last : 0);
+      } else if (y < top - 80 && index !== 0) {
+        readyAt = 0;
+        settle(0);
+      } else if (y > top + 80 && index !== last) {
+        readyAt = 0;
+        settle(last);
+      }
       return;
     }
+
     const next = Math.max(0, Math.min(last, Math.round((y - top) / step)));
     if (index !== next) {
       readyAt = 0;
@@ -127,7 +159,8 @@ export function bindSlideTrack(
   function isPinned(direction: number) {
     const { top, end } = bounds();
     const y = window.scrollY;
-    const pinned = y >= top - 12 && y <= end + 12;
+    const tol = compact ? 28 : 12;
+    const pinned = y >= top - tol && y <= end + tol;
     if (direction !== 0) {
       entryDirection = !pinned && ((direction > 0 && y < top) || (direction < 0 && y > end))
         ? direction : 0;
@@ -176,8 +209,9 @@ export function bindSlideTrack(
     wheelDistance += rawDelta * unit;
 
     if (horizontal) {
-      if (!isPinned(0)) return;
-      // Prevent browser horizontal back/forward navigation while browsing pinned slides.
+      const onCompactTrack = compact && event.target instanceof Element && track.contains(event.target);
+      if (!isPinned(0) && !onCompactTrack) return;
+      // Prevent browser horizontal back/forward navigation while browsing slides.
       event.preventDefault();
       if (now < readyAt) wheelUsed = true;
       if (!wheelUsed && Math.abs(wheelDistance) >= GESTURE_THRESHOLD) {
@@ -226,7 +260,8 @@ export function bindSlideTrack(
     }
 
     if (touchAxis === 'x') {
-      if (!isPinned(0)) return;
+      const onCompactTrack = compact && event.target instanceof Element && track.contains(event.target);
+      if (!isPinned(0) && !onCompactTrack) return;
       const direction = Math.sign(dx);
       if (!direction) return;
       event.preventDefault();
@@ -314,4 +349,3 @@ export function bindSlideTrack(
     },
   };
 }
-

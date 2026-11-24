@@ -64,10 +64,15 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
     if (index < 0) return;
 
     // Sticky elements report their pinned position. Use the flow dimensions for anchor targets.
-    const top = sections.slice(0, index + 1).reduce((offset, section, step) => {
+    const flowTop = sections.slice(0, index + 1).reduce((offset, section, step) => {
       const margin = parseFloat(getComputedStyle(section).marginTop) || 0;
       return offset + margin + (step < index ? section.getBoundingClientRect().height : 0);
     }, 0);
+    const targetSection = sections[index];
+    const targetHeight = targetSection.getBoundingClientRect().height;
+    const top = targetSection.id === 'services' && targetHeight < window.innerHeight - 64
+      ? Math.max(0, Math.round(flowTop - 64 - (window.innerHeight - 64 - targetHeight) / 2))
+      : flowTop;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (lenisRef.current) {
       lenisRef.current.scrollTo(top, { duration: 2, immediate: immediate || reduce });
