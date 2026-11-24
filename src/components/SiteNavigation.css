@@ -99,15 +99,6 @@ body[data-nav="dark"] .shreshta-landing .site-navigation .nav::before {
   justify-self: end;
 }
 
-.shreshta-landing .site-navigation .nav .enq {
-  border: 1px solid rgba(55, 27, 14, 0.28);
-  padding: 9px 16px;
-}
-
-body[data-nav="dark"] .shreshta-landing .site-navigation .nav .enq {
-  border-color: rgba(250, 244, 234, 0.34);
-}
-
 .site-navigation .nav .menu {
   display: none;
 }

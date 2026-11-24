@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { ArrowUpRight } from 'lucide-react';
 import { BRAND_NAME, BRAND_SHORT_NAME } from '../data/brand';
+import { OPENING_PHOTO, OPENING_PHOTO_SMALL } from '../data/pages';
 import { SiteNavigation } from './SiteNavigation';
 import { ConsultationForm } from './ConsultationForm';
 import { CONSULTATION_NOTE, PROCESS_STAGES, STORY_LINE, STORY_PHOTO_ALT, STORY_PHOTO_URL, STORY_PORTRAIT_LINES } from '../data/studioContent';
-import { ceremonyServiceHref, SERVICES_HREF } from '../data/siteNavigation';
+import { SERVICES_HREF } from '../data/siteNavigation';
 import { bindSlideTrack } from '../utils/slideTrack';
 import { CEREMONY_SLIDES } from '../data/ceremonies';
 import './ShreshtaLanding.css';
@@ -621,98 +621,30 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
 
       {/* 0 · Hero */}
       <header className="hero overlap-sheet" id="top" data-nav="light">
-        <svg className="hero-silk" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="silkTop" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#efe0ca" stopOpacity="0.55" />
-              <stop offset="50%" stopColor="#faf4ea" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#ead6bc" stopOpacity="0.55" />
-            </linearGradient>
-            <linearGradient id="silkBot" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#e8d2b6" stopOpacity="0.72" />
-              <stop offset="55%" stopColor="#f6ecdd" stopOpacity="0.88" />
-              <stop offset="100%" stopColor="#faf4ea" stopOpacity="0.25" />
-            </linearGradient>
-          </defs>
-          <path d="M0,122 C320,165 620,76 960,126 C1180,158 1340,128 1440,104 L1440,188 C1220,214 960,164 620,178 C320,192 140,172 0,158 Z" fill="url(#silkTop)" />
-          <path d="M0,694 C240,654 460,726 760,716 C1060,706 1260,680 1440,712 L1440,764 L0,764 Z" fill="url(#silkBot)" />
-        </svg>
-
-        <div className="hero-shell">
-          <div className="hero-eyebrow">
-            <span>Wedding Event Management &amp; Design</span>
-            <i aria-hidden="true" />
-          </div>
-
-          <div className="hero-stage-grid">
-            <div className="hero-editorial">
-              <h1 aria-label={`${BRAND_NAME}, luxury wedding planners and event designers in Hyderabad — Imagined. Designed. Celebrated.`}>
-                <span className="hero-title-line">Imagined.</span>
-                <span className="hero-title-line hero-title-line--gold">Designed.</span>
-                <span className="hero-title-line">Celebrated.</span>
-              </h1>
-              <p className="hero-sub">
-                End-to-end wedding planning, design, and production — from intimate celebrations to grand multi-day weddings.
-              </p>
-              <a href={SERVICES_HREF} className="hero-cta-btn">
-                <span>Explore Our Weddings</span>
-                <ArrowUpRight size={15} aria-hidden="true" />
-              </a>
-            </div>
-
-            <div className="hero-triptych" aria-label="Wedding ceremony showcase">
-              <figure className="hero-panel hero-panel--mandap">
-                <img
-                  src="/src/assets/images/hero-mandap-triptych.webp"
-                  alt="Carved sandstone temple wedding mandap with rose and jasmine garlands and brass lamps"
-                  width={720}
-                  height={724}
-                  fetchPriority="high"
-                  decoding="async"
-                />
-              </figure>
-              <figure className="hero-panel hero-panel--sangeet">
-                <img
-                  src="/src/assets/images/hero-sangeet-triptych.webp"
-                  alt="Illuminated sangeet reception stage with glowing arches, fairy light curtains, and florals"
-                  width={716}
-                  height={724}
-                  fetchPriority="high"
-                  decoding="async"
-                />
-              </figure>
-              <figure className="hero-panel hero-panel--haldi">
-                <img
-                  src="/src/assets/images/hero-haldi-triptych.webp"
-                  alt="Sunlit haldi and mehendi courtyard pergola with marigold garlands and lounge seating"
-                  width={720}
-                  height={724}
-                  fetchPriority="high"
-                  decoding="async"
-                />
-              </figure>
-            </div>
-          </div>
-
-          <nav className="hero-pillars" aria-label="Core wedding services">
-            <a className="hero-pillar" href={ceremonyServiceHref('wedding')}>
-              <span className="hero-pillar__num">01</span>
-              <span className="hero-pillar__label">Wedding Planning</span>
-            </a>
-            <a className="hero-pillar" href="/experiences/">
-              <span className="hero-pillar__num">02</span>
-              <span className="hero-pillar__label">Wedding Design &amp; Production</span>
-            </a>
-            <a className="hero-pillar" href={ceremonyServiceHref('sangeet')}>
-              <span className="hero-pillar__num">03</span>
-              <span className="hero-pillar__label">Sangeet &amp; Pre-Wedding Events</span>
-            </a>
-            <a className="hero-pillar" href={ceremonyServiceHref('haldi')}>
-              <span className="hero-pillar__num">04</span>
-              <span className="hero-pillar__label">Haldi, Mehendi &amp; Celebrations</span>
-            </a>
-          </nav>
+        <div className="film">
+          <img
+            src={OPENING_PHOTO}
+            srcSet={`${OPENING_PHOTO_SMALL} 720w, ${OPENING_PHOTO} 1376w`}
+            sizes="(orientation: portrait) max(100vw, 179svh), 100vw"
+            alt="A couple exchanges rings under string lights in a limestone courtyard"
+            fetchPriority="high"
+            decoding="async"
+          />
         </div>
+        <div className="lede">
+          <p className="top">Crafted for the timeless moments between vows.</p>
+          <div className="row">
+            <span>{BRAND_NAME.toUpperCase()}</span>
+            <span>
+              <b>Bespoke wedding planning &amp; design in Hyderabad</b>
+            </span>
+            <span>5 Ceremonial Chapters</span>
+            <span>
+              <b>2026 &amp; 2027 Season</b>
+            </span>
+          </div>
+        </div>
+        <h1 aria-label={`${BRAND_NAME}, luxury wedding planners and event designers in Hyderabad`}>{wordmark}</h1>
       </header>
 
       <main id="main-content" tabIndex={-1}>
