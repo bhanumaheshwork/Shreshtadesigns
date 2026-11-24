@@ -94,7 +94,7 @@ app.use(express.static(root, {
     } else if (path.endsWith('index.html')) {
       res.setHeader('Cache-Control', staging ? 'private, no-store' : 'public, max-age=0, s-maxage=300');
     } else if (/\.(?:webp|jpe?g|png)$/.test(path)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800');
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
     }
   },
 }));

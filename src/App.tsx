@@ -301,7 +301,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
                       }}
                     >
                       <img
-                        src={`/src/assets/images/showcase/${slide.centerpieceKey}.webp`}
+                        src={`/src/assets/images/showcase/${slide.centerpieceKey}.webp?v=2`}
                         alt={`${slide.name} centerpiece`}
                         loading="lazy"
                         decoding="async"
@@ -344,7 +344,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
                             }
                           >
                             <img
-                                src={`/src/assets/images/showcase/${piece.assetKey}.webp`}
+                                src={`/src/assets/images/showcase/${piece.assetKey}.webp?v=2`}
                                 alt=""
                                 loading="lazy"
                                 decoding="async"
@@ -390,7 +390,7 @@ export default function App({ logoSrc }: { logoSrc: string }) {
                             }
                           >
                             <img
-                                src={`/src/assets/images/showcase/${piece.assetKey}.webp`}
+                                src={`/src/assets/images/showcase/${piece.assetKey}.webp?v=2`}
                                 alt=""
                                 loading="lazy"
                                 decoding="async"
