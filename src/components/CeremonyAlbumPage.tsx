@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,6 +24,7 @@ interface CeremonyAlbumPageProps {
   logoSrc: string;
   inquiryOpen: boolean;
   transitionKey?: number;
+  restoreScrollTop?: number;
   onBackToCeremony: (ceremonyId: CeremonyId) => void;
   onOpenInquiry: (ceremonyId: CeremonyId) => void;
 }
@@ -33,6 +34,7 @@ export const CeremonyAlbumPage: React.FC<CeremonyAlbumPageProps> = ({
   logoSrc,
   inquiryOpen,
   transitionKey = 0,
+  restoreScrollTop,
   onBackToCeremony,
   onOpenInquiry,
 }) => {
@@ -50,12 +52,12 @@ export const CeremonyAlbumPage: React.FC<CeremonyAlbumPageProps> = ({
     [sections]
   );
 
-  // Reset scroll position and lightbox when switching between ceremony albums
-  useEffect(() => {
+  // Reset scroll position and lightbox before paint when switching between ceremony albums
+  useLayoutEffect(() => {
     setLightboxIndex(null);
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    scrollContainerRef.current?.scrollTo({ top: restoreScrollTop ?? 0, behavior: 'instant' });
     scrollContainerRef.current?.focus({ preventScroll: true });
-  }, [slide.id]);
+  }, [slide.id, restoreScrollTop]);
 
   // Keyboard navigation for Escape and Lightbox Prev/Next
   useEffect(() => {

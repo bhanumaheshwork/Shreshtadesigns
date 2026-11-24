@@ -1,7 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { BRAND_EMAIL, BRAND_NAME, BRAND_PHONE_E164 } from '../data/brand';
 import { CEREMONY_SLIDES } from '../data/ceremonies';
 import {
   CONSULTATION_NOTE,
@@ -11,7 +12,7 @@ import {
   STORY_PHOTO_URL,
   STORY_PORTRAIT_LINES,
 } from '../data/studioContent';
-import { ceremonyServiceHref, type StudioLink } from '../data/siteNavigation';
+import { ceremonyServiceHref, type StudioPageLink } from '../data/siteNavigation';
 import { ConsultationForm } from './ConsultationForm';
 import { SiteNavigation } from './SiteNavigation';
 import './CeremonyPage.css';
@@ -75,7 +76,7 @@ function OurStory({ title }: { title: string }) {
       <p className="studio-page__quote">{STORY_LINE}</p>
       {STORY_PORTRAIT_LINES.map((line) => <p key={line}>{line}</p>)}
       <a className="studio-page__text-link" href="/our-approach/">
-        Discover our approach <ArrowRight size={16} aria-hidden="true" />
+        Discover our wedding planning approach <ArrowRight size={16} aria-hidden="true" />
       </a>
     </StudioIntro>
   );
@@ -89,8 +90,8 @@ function Experiences({ title }: { title: string }) {
         alt: 'A rose-draped sandstone mandap surrounded by guests at sunset',
       }}>
         <p className="studio-page__lead">
-          From intimate courtyard ceremonies to grand palace weddings, we bring together
-          architecture, florals, lighting, and sound around the way you want to celebrate.
+          From intimate courtyard Mehendi and Haldi mornings to grand palace weddings in Hyderabad and across India, we bring together
+          mandap architecture, floral decor, lighting, and sound around the way you want to celebrate.
         </p>
         <dl className="studio-page__facts">
           <div><dt>Ceremonies</dt><dd>Five distinct formats</dd></div>
@@ -118,8 +119,8 @@ function Celebrations({ title }: { title: string }) {
     <>
       <StudioIntro title={title}>
         <p className="studio-page__lead">
-          Five ceremonies, from the first ring exchange to the last dance.
-          Explore the design and album for each celebration.
+          Five wedding ceremonies—from the first ring exchange to the last dance—designed and managed in Hyderabad and destination venues across India.
+          Explore the decor and album for each celebration.
         </p>
       </StudioIntro>
       <div className="studio-page__grid studio-page__grid--celebrations">
@@ -144,11 +145,11 @@ function OurApproach({ title }: { title: string }) {
       }}>
         <p className="studio-page__lead">
           We start with the rituals you want to honour, the people you want beside you,
-          and how you want the celebration to feel. Those choices guide us from the first
+          and how you want the celebration to feel. From our Hyderabad studio to destination venues across India, those choices guide us from the first
           sketch to the final send-off.
         </p>
         <a className="studio-page__text-link" href="/enquire/">
-          Start a conversation <ArrowRight size={16} aria-hidden="true" />
+          Start a wedding consultation <ArrowRight size={16} aria-hidden="true" />
         </a>
       </StudioIntro>
       <section className="studio-page__section" aria-labelledby="approach-process">
@@ -186,31 +187,122 @@ function Enquire({ title }: { title: string }) {
   );
 }
 
+function Terms({ title }: { title: string }) {
+  return (
+    <>
+      <StudioIntro title={title}>
+        <p className="studio-page__lead">
+          Terms governing the use of the {BRAND_NAME} website and wedding consultation enquiries.
+        </p>
+      </StudioIntro>
+      <section className="studio-page__section" aria-labelledby="terms-scope">
+        <h2 id="terms-scope">Website &amp; Consultation Terms</h2>
+        <div className="studio-page__grid">
+          <article className="studio-page__card">
+            <h3>Informational Showcase</h3>
+            <p>
+              Ceremony descriptions, design boards, sample timelines, and gallery albums represent
+              design inspiration and planning capabilities offered by {BRAND_NAME} in Hyderabad and
+              across India.
+            </p>
+          </article>
+          <article className="studio-page__card">
+            <h3>Consultations &amp; Quotations</h3>
+            <p>
+              Submitting a consultation enquiry does not create a binding booking. Event dates,
+              custom mandap architecture, floral designs, and pricing are confirmed separately by
+              written agreement.
+            </p>
+          </article>
+          <article className="studio-page__card">
+            <h3>Contact</h3>
+            <p>
+              For questions regarding these terms or an active celebration proposal, email{' '}
+              <a href={`mailto:${BRAND_EMAIL}`}>{BRAND_EMAIL}</a> or message us on WhatsApp at{' '}
+              {BRAND_PHONE_E164}.
+            </p>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function Privacy({ title }: { title: string }) {
+  return (
+    <>
+      <StudioIntro title={title}>
+        <p className="studio-page__lead">
+          How {BRAND_NAME} handles the details you share when requesting a wedding planning
+          consultation.
+        </p>
+      </StudioIntro>
+      <section className="studio-page__section" aria-labelledby="privacy-details">
+        <h2 id="privacy-details">Enquiry Data &amp; Privacy</h2>
+        <div className="studio-page__grid">
+          <article className="studio-page__card">
+            <h3>Information You Submit</h3>
+            <p>
+              When you submit the consultation form, we receive your name, partner&rsquo;s name,
+              email address, contact number, wedding date, expected guest count, venue ideas, and
+              celebration notes.
+            </p>
+          </article>
+          <article className="studio-page__card">
+            <h3>How We Use It</h3>
+            <p>
+              We use these details solely to respond to your enquiry, prepare design and
+              production discussions, and coordinate your consultation. We do not sell your
+              contact information.
+            </p>
+          </article>
+          <article className="studio-page__card">
+            <h3>Updates &amp; Removal</h3>
+            <p>
+              To update or request deletion of enquiry details you have sent to our Hyderabad
+              studio, write to <a href={`mailto:${BRAND_EMAIL}`}>{BRAND_EMAIL}</a>.
+            </p>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
 const pages = {
   'our-story': OurStory,
   experiences: Experiences,
   celebrations: Celebrations,
   'our-approach': OurApproach,
   enquire: Enquire,
+  terms: Terms,
+  privacy: Privacy,
 };
 
 export function StudioPage({
   page,
   logoSrc,
   transitionKey = 0,
+  restoreScrollTop,
 }: {
-  page: StudioLink;
+  page: StudioPageLink;
   logoSrc: string;
   transitionKey?: number;
+  restoreScrollTop?: number;
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const Content = pages[page.id];
 
+  useLayoutEffect(() => {
+    const scroller = pageRef.current;
+    if (!scroller) return;
+    scroller.scrollTo({ top: restoreScrollTop ?? 0, behavior: 'instant' });
+    scroller.focus({ preventScroll: true });
+  }, [page.id, restoreScrollTop]);
+
   useEffect(() => {
     const scroller = pageRef.current;
     if (!scroller) return;
-    scroller.scrollTo({ top: 0, behavior: 'instant' });
-    scroller.focus({ preventScroll: true });
 
     const media = gsap.matchMedia(scroller);
     media.add('(max-width: 719px) and (prefers-reduced-motion: no-preference)', () => {

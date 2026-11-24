@@ -3,11 +3,12 @@ import { access, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const dir = process.argv[2] ?? 'dist';
-const site = 'https://shreshtadesigns.com';
+const site = 'https://www.shreshtadesigns.com';
 const brand = 'Shreshta Designs';
 const staging = dir === 'dist-staging';
 const paths = [
   '/', '/services/', '/our-story/', '/experiences/', '/celebrations/', '/our-approach/', '/enquire/',
+  '/terms/', '/privacy/',
   ...['engagement', 'sangeet', 'haldi', 'wedding', 'reception'].map((id) => `/album/${id}/`),
 ];
 const titles = new Set();
@@ -50,15 +51,33 @@ for (const path of paths) {
 
   const schema = JSON.parse(page.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1]);
   const schemaTypes = schema['@graph'].map((entry) => entry['@type']).sort();
-  assert.deepEqual(schemaTypes, path === '/services/'
-    ? ['Organization', 'Service', 'WebSite'] : ['Organization', 'WebSite']);
+  const expectedWebPageType = path === '/our-story/'
+    ? 'AboutPage'
+    : path === '/enquire/'
+      ? 'ContactPage'
+      : path === '/celebrations/'
+        ? 'CollectionPage'
+        : 'WebPage';
+  const expectedTypes = path === '/'
+    ? ['HowTo', 'Organization', 'Service', 'WebPage', 'WebSite']
+    : path === '/services/'
+      ? ['BreadcrumbList', 'FAQPage', 'Organization', 'Service', 'WebPage', 'WebSite']
+      : path.startsWith('/album/')
+        ? ['BreadcrumbList', 'ImageGallery', 'Organization', 'WebPage', 'WebSite']
+        : ['BreadcrumbList', expectedWebPageType, 'Organization', 'WebSite'].sort();
+  assert.deepEqual(schemaTypes, expectedTypes, `${path} schema types`);
   for (const type of ['Organization', 'WebSite']) {
     const entity = schema['@graph'].find((entry) => entry['@type'] === type);
     assert.equal(entity.name, brand, `${path} ${type} name`);
     assert.equal(entity.url, site + '/', `${path} ${type} URL`);
   }
   const organization = schema['@graph'].find((entry) => entry['@type'] === 'Organization');
-  assert.equal(organization.areaServed.name, 'Hyderabad', `${path} service area`);
+  assert.equal(organization.areaServed[0].name, 'Hyderabad', `${path} service area`);
+  assert.ok(organization.telephone, `${path} Organization telephone`);
+  assert.equal(organization.address?.addressLocality, 'Hyderabad', `${path} Organization addressLocality`);
+  assert.ok(Array.isArray(organization.sameAs) && organization.sameAs.length > 0, `${path} Organization sameAs`);
+  const webPage = schema['@graph'].find((entry) => entry['@type'] === expectedWebPageType);
+  assert.equal(webPage.url, site + path, `${path} WebPage URL`);
   await access(join(dir, new URL(organization.logo).pathname));
   const image = page.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
   assert.ok(image?.startsWith(site));
@@ -102,9 +121,23 @@ if (staging) {
   const sitemap = await readFile(join(dir, 'sitemap.xml'), 'utf8');
   assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]),
     paths.map((path) => site + path));
-  assert.match(robots, /User-agent: \*\nDisallow: \/api\//);
-  assert.match(robots, /User-agent: GPTBot\nDisallow: \/\n/);
+  assert.equal([...sitemap.matchAll(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)].length, paths.length, 'sitemap lastmod dates');
+  assert.match(robots, /User-agent: \*\nAllow: \/\nDisallow: \/api\//);
+  assert.match(robots, /Content-Signal: search=yes, ai-input=yes, ai-train=no/);
+  assert.match(robots, /User-agent: Googlebot\nAllow: \/\nDisallow: \/api\//);
+  assert.match(robots, /User-agent: Bingbot\nAllow: \/\nDisallow: \/api\//);
+  assert.match(robots, /User-agent: GPTBot\nAllow: \/\nDisallow: \/api\//);
+  assert.match(robots, /User-agent: OAI-SearchBot\nAllow: \/\nDisallow: \/api\//);
+  assert.match(robots, /User-agent: PerplexityBot\nAllow: \/\nDisallow: \/api\//);
+  assert.doesNotMatch(robots, /User-agent: GPTBot\nDisallow: \//);
   assert.ok(robots.includes(`Sitemap: ${site}/sitemap.xml`));
+  await access(join(dir, 'llms.txt'));
+  const serverCard = JSON.parse(await readFile(join(dir, '.well-known', 'mcp', 'server-card.json'), 'utf8'));
+  assert.equal(serverCard.name, 'shreshta-designs');
+  assert.ok(serverCard.endpoint);
+  for (const path of paths) {
+    await access(join(dir, path.slice(1), 'index.md'));
+  }
 }
 
 const missing = await readFile(join(dir, '404.html'), 'utf8');

@@ -9,10 +9,12 @@ export function AlbumRoute({
   slide,
   logoSrc,
   transitionKey = 0,
+  restoreScrollTop,
 }: {
   slide: CeremonySlide;
   logoSrc: string;
   transitionKey?: number;
+  restoreScrollTop?: number;
 }) {
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
@@ -31,6 +33,7 @@ export function AlbumRoute({
         logoSrc={logoSrc}
         inquiryOpen={inquiryOpen}
         transitionKey={transitionKey}
+        restoreScrollTop={restoreScrollTop}
         onBackToCeremony={openDetails}
         onOpenInquiry={() => setInquiryOpen(true)}
       />

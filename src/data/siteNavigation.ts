@@ -18,4 +18,11 @@ export const STUDIO_LINKS = [
   { id: 'enquire', label: 'Enquire', href: '/enquire/' },
 ] as const;
 
+export const LEGAL_LINKS = [
+  { id: 'terms', label: 'Terms of use', href: '/terms/' },
+  { id: 'privacy', label: 'Privacy policy', href: '/privacy/' },
+] as const;
+
 export type StudioLink = (typeof STUDIO_LINKS)[number];
+export type LegalLink = (typeof LEGAL_LINKS)[number];
+export type StudioPageLink = StudioLink | LegalLink;

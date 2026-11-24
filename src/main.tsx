@@ -2,6 +2,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { BRAND_NAME } from './data/brand';
 import { findPage, legacyPageHref } from './data/pages';
 import { renderPage } from './renderPage';
+import { registerWebMcpTools } from './utils/webmcp';
 import './index.css';
 
 function start() {
@@ -12,6 +13,8 @@ function start() {
       return;
     }
   }
+
+  registerWebMcpTools();
 
   const root = document.getElementById('root')!;
   const page = findPage(location.pathname);

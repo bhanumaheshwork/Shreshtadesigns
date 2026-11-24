@@ -10,6 +10,44 @@ export default defineConfig(() => {
     plugins: [
       react(),
       tailwindcss(),
+      {
+        name: 'agent-ready-dev-middleware',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const url = (req.url || '/').split('?')[0];
+            const distDir = path.resolve(import.meta.dirname, 'dist');
+            if (url === '/.well-known/mcp/server-card.json') {
+              const file = path.join(distDir, '.well-known/mcp/server-card.json');
+              if (fs.existsSync(file)) {
+                res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                res.end(fs.readFileSync(file));
+                return;
+              }
+            }
+            if (url === '/llms.txt' || url === '/robots.txt' || url === '/sitemap.xml') {
+              const file = path.join(distDir, url.slice(1));
+              if (fs.existsSync(file)) {
+                res.setHeader('Content-Type', url.endsWith('.xml') ? 'application/xml; charset=utf-8' : 'text/plain; charset=utf-8');
+                res.end(fs.readFileSync(file));
+                return;
+              }
+            }
+            const normalized = url === '/' ? '/' : url.replace(/\/?$/, '/');
+            const mdFile = path.join(distDir, normalized.slice(1), 'index.md');
+            if (!url.startsWith('/src/') && !url.startsWith('/@') && !url.startsWith('/node_modules/') && fs.existsSync(mdFile)) {
+              const mdHref = normalized === '/' ? '/index.md' : `${normalized}index.md`;
+              res.setHeader('Vary', 'Accept');
+              res.setHeader('Link', `</llms.txt>; rel="llms-txt"; type="text/plain", <${mdHref}>; rel="alternate"; type="text/markdown", </.well-known/mcp/server-card.json>; rel="describedby"; type="application/json", </sitemap.xml>; rel="sitemap"; type="application/xml"`);
+              if (req.headers.accept?.includes('text/markdown')) {
+                res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+                res.end(fs.readFileSync(mdFile));
+                return;
+              }
+            }
+            next();
+          });
+        },
+      },
       // Copy the assets used by the production website.
       {
         name: 'copy-deployable-files',

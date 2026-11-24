@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type MouseEventHandler } from 'react';
 import { BRAND_NAME } from '../data/brand';
-import { SERVICES_HREF, STUDIO_LINKS, type StudioLink } from '../data/siteNavigation';
+import { SERVICES_HREF, STUDIO_LINKS, type StudioPageLink } from '../data/siteNavigation';
 import './SiteNavigation.css';
 
 const menuLinks = [{ label: 'Services', href: SERVICES_HREF }, ...STUDIO_LINKS];
 
 interface SiteNavigationProps {
   logoSrc: string;
-  activePage?: StudioLink;
+  activePage?: StudioPageLink;
   onHomeClick?: MouseEventHandler<HTMLAnchorElement>;
 }
 

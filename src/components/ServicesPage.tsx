@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { BRAND_NAME } from '../data/brand';
 import { CEREMONY_SLIDES, type CeremonySlide } from '../data/ceremonies';
 import { ceremonyAlbumHref, ceremonyServiceHref } from '../data/siteNavigation';
+import { PLANNING_FAQS } from '../data/studioContent';
 import './CeremonyPage.css';
 
 function CeremonySection({ slide, priority }: { slide: CeremonySlide; priority: boolean }) {
@@ -71,14 +72,16 @@ export function ServicesPage({
   logoSrc,
   hash = '',
   transitionKey = 0,
+  restoreScrollTop,
 }: {
   logoSrc: string;
   hash?: string;
   transitionKey?: number;
+  restoreScrollTop?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let frame = 0;
     const restoreChapter = () => {
       cancelAnimationFrame(frame);
@@ -90,6 +93,10 @@ export function ServicesPage({
           chapter.scrollIntoView({ block: 'start', behavior: 'instant' });
           return;
         }
+      }
+      if (restoreScrollTop !== undefined) {
+        containerRef.current?.scrollTo({ top: restoreScrollTop, behavior: 'instant' });
+        return;
       }
       frame = requestAnimationFrame(() => {
         const chapter = targetId ? document.getElementById(targetId) : null;
@@ -106,7 +113,7 @@ export function ServicesPage({
       cancelAnimationFrame(frame);
       window.removeEventListener('pageshow', restoreChapter);
     };
-  }, [hash]);
+  }, [hash, restoreScrollTop]);
 
   return (
     <div
@@ -132,7 +139,7 @@ export function ServicesPage({
         tabIndex={-1}
         className={`ceremony-page__content${transitionKey ? ' route-transition-in' : ''}`}
       >
-        <h1 className="sr-only" id="services-page-title">Wedding planning and design services in Hyderabad</h1>
+        <h1 className="sr-only" id="services-page-title">Luxury wedding planning, mandap design and event management services in Hyderabad</h1>
         {CEREMONY_SLIDES.map((slide) => (
           <CeremonySection key={slide.id} slide={slide} priority={slide.id === CEREMONY_SLIDES[0].id} />
         ))}
@@ -140,14 +147,16 @@ export function ServicesPage({
           <div className="ceremony-page__details">
             <div>
               <h2 id="planning-questions">Planning your wedding</h2>
-              <p className="ceremony-page__lead">Our Hyderabad studio brings ceremony design and on-site coordination together.</p>
-              <a className="ceremony-page__album-link" href="/enquire/">Request a consultation</a>
+              <p className="ceremony-page__lead">Our Hyderabad studio brings wedding planning, mandap architecture, floral decor and on-site event management together across Hyderabad and destination venues in India.</p>
+              <a className="ceremony-page__album-link" href="/enquire/">Request a wedding consultation</a>
             </div>
             <div>
-              <h3>What does wedding planning include?</h3>
-              <p>We discuss your rituals, guests and venue, then develop the design, production schedule and on-site plan for each celebration.</p>
-              <h3>What affects the cost?</h3>
-              <p>Your quote depends on the venue, guest count, number of ceremonies and production needs, including custom structures, florals and lighting.</p>
+              {PLANNING_FAQS.map(({ question, answer }) => (
+                <div key={question}>
+                  <h3>{question}</h3>
+                  <p>{answer}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>

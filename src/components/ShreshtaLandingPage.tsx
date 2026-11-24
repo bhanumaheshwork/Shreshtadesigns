@@ -636,7 +636,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
           <div className="row">
             <span>{BRAND_NAME.toUpperCase()}</span>
             <span>
-              <b>Bespoke wedding architecture in Hyderabad</b>
+              <b>Bespoke wedding planning &amp; design in Hyderabad</b>
             </span>
             <span>5 Ceremonial Chapters</span>
             <span>
@@ -644,7 +644,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
             </span>
           </div>
         </div>
-        <h1 aria-label={`${BRAND_NAME}, wedding planners in Hyderabad`}>{wordmark}</h1>
+        <h1 aria-label={`${BRAND_NAME}, luxury wedding planners and event designers in Hyderabad`}>{wordmark}</h1>
       </header>
 
       <main id="main-content" tabIndex={-1}>
@@ -954,7 +954,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
               </p>
               <b>Five moods, one studio, effortless orchestration.</b>
               <a href={SERVICES_HREF} className="services-link">
-                Explore All Services →
+                Explore Wedding Services →
               </a>
               <div className="meta">
                 <span>{BRAND_NAME}</span>
@@ -1007,7 +1007,16 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
             <span>{wordmark}</span>
           </div>
           <div className="foot">
-            <span>{BRAND_NAME} · Archiving the Art of Celebration</span>
+            <span>{BRAND_NAME} · Wedding Planners &amp; Designers in Hyderabad</span>
+            <span>
+              <a href="/our-story/">About</a>
+              <span aria-hidden="true"> · </span>
+              <a href="/enquire/">Contact</a>
+              <span aria-hidden="true"> · </span>
+              <a href="/terms/">Terms</a>
+              <span aria-hidden="true"> · </span>
+              <a href="/privacy/">Privacy</a>
+            </span>
             <span>Engagement · Sangeet · Haldi · Wedding · Reception</span>
           </div>
         </section>

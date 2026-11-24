@@ -1,39 +1,67 @@
 import { BRAND_NAME } from './brand';
 import { ALBUM_COVERS } from './ceremonyGallery';
 import { CEREMONY_SLIDES } from './ceremonies';
-import { ceremonyAlbumHref, SERVICES_HREF, STUDIO_LINKS } from './siteNavigation';
+import { ceremonyAlbumHref, LEGAL_LINKS, SERVICES_HREF, STUDIO_LINKS } from './siteNavigation';
 
-export const SITE_ORIGIN = 'https://shreshtadesigns.com';
+export const SITE_ORIGIN = 'https://www.shreshtadesigns.com';
 export const OPENING_PHOTO = '/src/assets/images/album_engagement_hero_1795088227985.webp';
 export const OPENING_PHOTO_SMALL = '/src/assets/images/album_engagement_hero_720.webp';
 
+const studioTitles = {
+  'our-story': 'Our Story — Wedding Design Studio in Hyderabad',
+  experiences: 'Wedding Decor, Mandap & Stage Design in Hyderabad',
+  celebrations: 'Wedding Ceremonies & Celebration Planning in Hyderabad',
+  'our-approach': 'Wedding Planning & Production Process in Hyderabad',
+  enquire: 'Enquire — Wedding Planners in Hyderabad',
+  terms: 'Terms of Use',
+  privacy: 'Privacy Policy',
+} as const;
+
 const studioDescriptions = {
-  'our-story': `Meet ${BRAND_NAME}, a Hyderabad wedding design studio bringing mandap architecture, florals and lighting together around your ceremony.`,
-  experiences: 'Explore how our Hyderabad studio designs wedding spaces, from carved mandaps and floral installations to lighting, music and the guest experience.',
-  celebrations: 'Find design inspiration for five Indian wedding celebrations: Engagement, Sangeet, Haldi, Wedding and Reception.',
-  'our-approach': `See how ${BRAND_NAME} plans and produces weddings in Hyderabad, from your first consultation and design boards to on-site coordination.`,
-  enquire: `Enquire with ${BRAND_NAME} in Hyderabad. Share your wedding date, guest count, venue ideas and vision for a private consultation.`,
+  'our-story': `Meet ${BRAND_NAME}, a Hyderabad wedding planning and design studio crafting carved mandaps, floral decor and lighting for calm, memorable ceremonies.`,
+  experiences: 'Explore luxury wedding decoration, carved stone and timber mandap design, floral installations, lighting and sangeet stage production in Hyderabad.',
+  celebrations: 'Explore wedding themes and decor inspiration for Engagement, Sangeet, Haldi, Wedding and Reception celebrations curated by Shreshta Designs in Hyderabad.',
+  'our-approach': `See how ${BRAND_NAME} plans and manages weddings in Hyderabad and destination venues across India, from concept and mandap sketches to execution.`,
+  enquire: `Book a private wedding planning and decor consultation with ${BRAND_NAME} in Hyderabad. Share your dates, guest count, destination and ceremony vision.`,
+  terms: `Read the website terms of use and consultation enquiry terms for ${BRAND_NAME}, a wedding planning and design studio in Hyderabad.`,
+  privacy: `Read how ${BRAND_NAME} collects and uses consultation enquiry details submitted through our website, email, and WhatsApp.`,
+};
+
+const albumTitles: Record<(typeof CEREMONY_SLIDES)[number]['id'], string> = {
+  engagement: 'Engagement Event Design & Ring Ceremony Album',
+  sangeet: 'Sangeet Stage Design & Night Celebration Album',
+  haldi: 'Haldi Decoration & Courtyard Ceremony Album',
+  wedding: 'Wedding Mandap Design & Ceremony Decor Album',
+  reception: 'Wedding Reception Decor & Gala Design Album',
+};
+
+const albumDescriptions: Record<(typeof CEREMONY_SLIDES)[number]['id'], string> = {
+  engagement: `Explore engagement decor and ring ceremony styling by ${BRAND_NAME} in Hyderabad—courtyard lighting, floral arches and editorial seating.`,
+  sangeet: `Explore sangeet stage design, mirror-work dance floors, acoustic lighting and live dhol celebration decor by ${BRAND_NAME} in Hyderabad.`,
+  haldi: `Explore haldi decoration ideas by ${BRAND_NAME} in Hyderabad—marigold canopies, brass urlis, mogra garlands and sunlit courtyard styling.`,
+  wedding: `Explore bespoke wedding mandap architecture, varmala stages, jasmine garlands and heritage ceremony decor designed by ${BRAND_NAME} in Hyderabad.`,
+  reception: `Explore luxury wedding reception decoration by ${BRAND_NAME} in Hyderabad—crystal chandeliers, floral stages and candlelit banquet tables.`,
 };
 
 export const pages = [
   {
     kind: 'home',
     path: '/',
-    title: 'Wedding & Event Planners in Hyderabad',
-    description: `${BRAND_NAME} plans and designs weddings in Hyderabad, with bespoke mandaps, florals, lighting and coordination across five wedding celebrations.`,
+    title: 'Luxury Wedding & Event Planners in Hyderabad',
+    description: 'Luxury wedding planners in Hyderabad for bespoke mandap design, wedding decor and event management across Engagement, Sangeet, Haldi, Wedding and Reception.',
     image: OPENING_PHOTO,
   },
   {
     kind: 'services',
     path: SERVICES_HREF,
-    title: 'Wedding Planning & Design Services in Hyderabad',
-    description: 'Explore wedding planning and event design for Engagement, Sangeet, Haldi, Wedding and Reception. See the designs and timeline for each ceremony.',
+    title: 'Wedding Planning & Decor Services in Hyderabad',
+    description: 'Wedding planning, mandap design, floral decor and event coordination in Hyderabad for Engagement, Sangeet, Haldi, Wedding and Reception.',
     image: OPENING_PHOTO,
   },
-  ...STUDIO_LINKS.map((link) => ({
+  ...[...STUDIO_LINKS, ...LEGAL_LINKS].map((link) => ({
     kind: 'studio' as const,
     path: link.href,
-    title: link.id === 'enquire' ? 'Enquire About Your Wedding in Hyderabad' : link.label,
+    title: studioTitles[link.id],
     description: studioDescriptions[link.id],
     image: '/src/assets/images/our-story-wedding-portrait.webp',
     link,
@@ -41,8 +69,8 @@ export const pages = [
   ...CEREMONY_SLIDES.map((slide) => ({
     kind: 'album' as const,
     path: ceremonyAlbumHref(slide.id),
-    title: `${slide.name} Design Album`,
-    description: slide.album.storyLead,
+    title: albumTitles[slide.id],
+    description: albumDescriptions[slide.id],
     image: ALBUM_COVERS[slide.id].src,
     slide,
   })),

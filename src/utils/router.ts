@@ -2,6 +2,11 @@ import { findPage, legacyPageHref, type SitePage } from '../data/pages';
 
 export type NavigationType = 'initial' | 'push' | 'replace' | 'pop';
 
+export interface SavedScrollPosition {
+  windowY: number;
+  containerY: number;
+}
+
 export interface RouteState {
   pathname: string;
   search: string;
@@ -9,16 +14,44 @@ export interface RouteState {
   page: SitePage;
   key: number;
   navigationType: NavigationType;
+  savedScroll?: SavedScrollPosition;
 }
 
 type RouteListener = (state: RouteState) => void;
 
 const listeners = new Set<RouteListener>();
 const prefetchedImages = new Set<string>();
+const scrollPositions = new Map<number, SavedScrollPosition>();
 const ASSET_EXT_RE = /\.(?:webp|png|jpe?g|gif|svg|ico|avif|css|js|mjs|json|xml|txt|pdf|woff2?)$/i;
 
 let routeCounter = 0;
+let activeHistoryId = 0;
 let dispatchingHash = false;
+
+function readHistoryRouteId(): number {
+  const state = window.history.state;
+  if (state && typeof state === 'object' && typeof (state as { __routeId?: unknown }).__routeId === 'number') {
+    return (state as { __routeId: number }).__routeId;
+  }
+  return 0;
+}
+
+function buildHistoryState(routeId: number) {
+  const existing = window.history.state;
+  if (existing && typeof existing === 'object') {
+    return { ...existing, __routeId: routeId };
+  }
+  return { __routeId: routeId };
+}
+
+function saveCurrentScroll() {
+  if (typeof window === 'undefined') return;
+  const scroller = document.querySelector<HTMLElement>('.ceremony-page');
+  scrollPositions.set(activeHistoryId, {
+    windowY: window.scrollY,
+    containerY: scroller ? scroller.scrollTop : 0,
+  });
+}
 
 function resolveCanonicalPath(pathname: string, page: SitePage): string {
   return page.kind === 'missing' ? pathname : page.path;
@@ -29,6 +62,7 @@ export function createRouteState(
   search: string,
   hash: string,
   navigationType: NavigationType,
+  savedScroll?: SavedScrollPosition,
 ): RouteState {
   const page = findPage(pathname);
   return {
@@ -38,15 +72,20 @@ export function createRouteState(
     page,
     key: navigationType === 'initial' ? 0 : ++routeCounter,
     navigationType,
+    savedScroll,
   };
 }
 
 export function getBrowserRoute(navigationType: NavigationType = 'initial'): RouteState {
+  const historyId = readHistoryRouteId();
+  const savedScroll = navigationType === 'pop' ? scrollPositions.get(historyId) : undefined;
+  activeHistoryId = historyId;
   return createRouteState(
     window.location.pathname,
     window.location.search,
     window.location.hash,
     navigationType,
+    savedScroll,
   );
 }
 
@@ -61,12 +100,20 @@ export function subscribeRoute(listener: RouteListener): () => void {
   };
 }
 
+function preferredScrollBehavior(): ScrollBehavior {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 'instant';
+  }
+  return 'smooth';
+}
+
 function scrollActivePageToTop() {
+  const behavior = preferredScrollBehavior();
   const scroller = document.querySelector<HTMLElement>('.ceremony-page');
   if (scroller) {
-    scroller.scrollTo({ top: 0, behavior: 'smooth' });
+    scroller.scrollTo({ top: 0, behavior });
   } else {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior });
   }
 }
 
@@ -79,8 +126,19 @@ export function isInternalPageUrl(url: URL): boolean {
   return true;
 }
 
+function canPrefetchOnConnection(): boolean {
+  const nav = navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string };
+  };
+  if (nav.connection?.saveData) return false;
+  const effectiveType = nav.connection?.effectiveType;
+  if (effectiveType === 'slow-2g' || effectiveType === '2g') return false;
+  return true;
+}
+
 export function prefetchRoute(href: string) {
   if (typeof window === 'undefined') return;
+  if (!canPrefetchOnConnection()) return;
   let url: URL;
   try {
     url = new URL(href, window.location.origin);
@@ -127,15 +185,17 @@ export function navigate(to: string, options?: { replace?: boolean }) {
         scrollActivePageToTop();
       } else {
         const targetEl = document.getElementById(url.hash.slice(1));
-        targetEl?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        targetEl?.scrollIntoView({ block: 'start', behavior: preferredScrollBehavior() });
       }
       return;
     }
 
+    saveCurrentScroll();
     if (options?.replace) {
-      window.history.replaceState(null, '', targetFull);
+      window.history.replaceState(buildHistoryState(activeHistoryId), '', targetFull);
     } else {
-      window.history.pushState(null, '', targetFull);
+      activeHistoryId = ++routeCounter;
+      window.history.pushState(buildHistoryState(activeHistoryId), '', targetFull);
     }
     notify(createRouteState(targetPathname, url.search, url.hash, options?.replace ? 'replace' : 'push'));
     dispatchingHash = true;
@@ -147,14 +207,13 @@ export function navigate(to: string, options?: { replace?: boolean }) {
     return;
   }
 
-  if (!url.hash) {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }
+  saveCurrentScroll();
 
   if (options?.replace) {
-    window.history.replaceState(null, '', targetFull);
+    window.history.replaceState(buildHistoryState(activeHistoryId), '', targetFull);
   } else {
-    window.history.pushState(null, '', targetFull);
+    activeHistoryId = ++routeCounter;
+    window.history.pushState(buildHistoryState(activeHistoryId), '', targetFull);
   }
 
   notify(createRouteState(targetPathname, url.search, url.hash, options?.replace ? 'replace' : 'push'));
@@ -232,15 +291,25 @@ export function installRouter(): () => void {
     notify(getBrowserRoute('pop'));
   };
 
+  const previousRestoration = window.history.scrollRestoration;
+  window.history.scrollRestoration = 'manual';
+  activeHistoryId = readHistoryRouteId();
+  if (!window.history.state || typeof (window.history.state as { __routeId?: unknown }).__routeId !== 'number') {
+    window.history.replaceState(buildHistoryState(activeHistoryId), '', window.location.href);
+  }
+
   document.addEventListener('click', handleClick);
   document.addEventListener('pointerenter', handlePrefetch, true);
+  document.addEventListener('focusin', handlePrefetch, true);
   document.addEventListener('touchstart', handlePrefetch, { passive: true, capture: true });
   window.addEventListener('popstate', handlePopState);
   window.addEventListener('hashchange', handleHashChange);
 
   return () => {
+    window.history.scrollRestoration = previousRestoration;
     document.removeEventListener('click', handleClick);
     document.removeEventListener('pointerenter', handlePrefetch, true);
+    document.removeEventListener('focusin', handlePrefetch, true);
     document.removeEventListener('touchstart', handlePrefetch, true);
     window.removeEventListener('popstate', handlePopState);
     window.removeEventListener('hashchange', handleHashChange);

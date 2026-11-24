@@ -46,4 +46,27 @@ export const STORY_PORTRAIT_LINES = [
   `${BRAND_NAME} choreographs architectural mandaps, living botanicals, and spatial lighting so the room frames every emotion without noise.`,
 ];
 export const STORY_LINE = 'Half of every ceremony is its stillness.';
-export const CONSULTATION_NOTE = 'Tell our Hyderabad studio about your date, venue, and plans. We can discuss mandap design, floral palettes, lighting, and the schedule for each ceremony.';
+export const CONSULTATION_NOTE = 'Tell our Hyderabad studio about your date, venue, or destination. We plan weddings and private celebrations across Engagement, Sangeet, Haldi, Wedding, and Reception—from mandap design and florals to full on-site management.';
+
+export const PLANNING_FAQS = [
+  {
+    question: 'Who provides luxury wedding planning and design services in Hyderabad?',
+    answer: `${BRAND_NAME} is a Hyderabad-based wedding planning and event design studio specializing in carved mandap architecture, floral decoration, stage lighting, and end-to-end celebration management.`,
+  },
+  {
+    question: 'Which wedding ceremonies and functions do you plan?',
+    answer: 'We plan and design full wedding weekends and individual private events, including Engagement soirées, Mehendi and Haldi mornings, Sangeet performances, Wedding baraat and pheras, and evening Receptions.',
+  },
+  {
+    question: 'What does wedding planning and decoration include?',
+    answer: 'We discuss your rituals, guests, and venue, then develop custom design boards, mandap and stage layouts, floral styling, lighting and sound cues, production schedules, and on-site coordination.',
+  },
+  {
+    question: 'Do you plan destination weddings outside Hyderabad?',
+    answer: 'Yes. While our design studio is based in Hyderabad, Telangana, we plan and produce luxury destination weddings across India, managing venue layouts, fabrication, and on-site hospitality.',
+  },
+  {
+    question: 'What affects wedding decor and planning costs, and how can we enquire?',
+    answer: 'Your quote depends on the venue, guest count, number of ceremonies, and production scope such as custom mandaps, florals, and lighting. Submit the enquiry form, email info@shreshtadesigns.com, or message us on WhatsApp to book a consultation.',
+  },
+] as const;

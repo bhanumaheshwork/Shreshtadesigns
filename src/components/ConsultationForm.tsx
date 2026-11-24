@@ -95,6 +95,10 @@ export function ConsultationForm({
         className={className ? `consultation-form ${className} ${feedback?.kind === 'success' ? 'is-success' : ''}` : `consultation-form ${feedback?.kind === 'success' ? 'is-success' : ''}`}
         action="/api/consultation"
         method="post"
+        {...({
+          toolname: 'submit_consultation_enquiry',
+          tooldescription: 'Submit a wedding planning and design consultation enquiry to Shreshta Designs in Hyderabad.',
+        } as Record<string, string>)}
         onChange={() => setFeedback(null)}
         onSubmit={submitConsultation}
         aria-busy={sending}
