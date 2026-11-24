@@ -121,10 +121,13 @@ export default function App({ logoSrc }: { logoSrc: string }) {
     const vw = window.innerWidth;
     const mobile = vw < 720;
     const stageW = stageRef.current?.clientWidth || vw;
-    const stageH = stageRef.current?.clientHeight || (mobile ? (stageW * 9) / 16 : window.innerHeight);
-    const u = mobile
-      ? Math.min(stageW / 1440, stageH / 900)
-      : Math.min(vw / 1440, stageH / 900);
+    const stageH = stageRef.current?.clientHeight || (mobile ? Math.max(480, window.innerHeight - 64) : window.innerHeight);
+    const portraitMobile = mobile && stageH > stageW;
+    const u = portraitMobile
+      ? Math.min(stageW / 880, stageH / 840)
+      : mobile
+        ? Math.min(stageW / 1440, stageH / 900)
+        : Math.min(vw / 1440, stageH / 900);
     const fy = 0;
 
     uRef.current = u;
