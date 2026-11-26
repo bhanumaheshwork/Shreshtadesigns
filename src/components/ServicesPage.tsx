@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { BRAND_NAME } from '../data/brand';
 import { CEREMONY_SLIDES, type CeremonySlide } from '../data/ceremonies';
 import { ceremonyAlbumHref, ceremonyServiceHref } from '../data/siteNavigation';
-import { PLANNING_FAQS } from '../data/studioContent';
+import { PlanningFaqAccordion } from './PlanningFaqAccordion';
 import './CeremonyPage.css';
 
 function CeremonySection({ slide, priority }: { slide: CeremonySlide; priority: boolean }) {
@@ -150,14 +150,7 @@ export function ServicesPage({
               <p className="ceremony-page__lead">Our Hyderabad studio brings wedding planning, mandap architecture, floral decor and on-site event management together across Hyderabad and destination venues in India.</p>
               <a className="ceremony-page__album-link" href="/enquire/">Request a wedding consultation</a>
             </div>
-            <div>
-              {PLANNING_FAQS.map(({ question, answer }) => (
-                <div key={question}>
-                  <h3>{question}</h3>
-                  <p>{answer}</p>
-                </div>
-              ))}
-            </div>
+            <PlanningFaqAccordion />
           </div>
         </section>
       </main>

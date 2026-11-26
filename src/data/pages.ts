@@ -8,7 +8,7 @@ export const OPENING_PHOTO = '/src/assets/images/album_engagement_hero_179508822
 export const OPENING_PHOTO_SMALL = '/src/assets/images/album_engagement_hero_720.webp';
 
 const studioTitles = {
-  'our-story': 'Our Story — Wedding Design Studio in Hyderabad',
+  'our-story': 'About Us — Wedding Design Studio in Hyderabad',
   experiences: 'Wedding Decor, Mandap & Stage Design in Hyderabad',
   celebrations: 'Wedding Ceremonies & Celebration Planning in Hyderabad',
   'our-approach': 'Wedding Planning & Production Process in Hyderabad',

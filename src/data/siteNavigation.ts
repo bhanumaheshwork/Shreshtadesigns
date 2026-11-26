@@ -11,7 +11,7 @@ export function ceremonyAlbumHref(ceremonyId: CeremonyId) {
 }
 
 export const STUDIO_LINKS = [
-  { id: 'our-story', label: 'Our story', href: '/our-story/' },
+  { id: 'our-story', label: 'About us', href: '/our-story/' },
   { id: 'experiences', label: 'Experiences', href: '/experiences/' },
   { id: 'celebrations', label: 'Celebrations', href: '/celebrations/' },
   { id: 'our-approach', label: 'Our approach', href: '/our-approach/' },

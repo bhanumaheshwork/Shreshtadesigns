@@ -14,6 +14,7 @@ import {
 } from '../data/studioContent';
 import { ceremonyServiceHref, type StudioPageLink } from '../data/siteNavigation';
 import { ConsultationForm } from './ConsultationForm';
+import { PlanningFaqAccordion } from './PlanningFaqAccordion';
 import { SiteNavigation } from './SiteNavigation';
 import './CeremonyPage.css';
 import './StudioPage.css';
@@ -72,13 +73,33 @@ function StudioIntro({ title, photo, children }: {
 
 function OurStory({ title }: { title: string }) {
   return (
-    <StudioIntro title={title} photo={{ src: STORY_PHOTO_URL, alt: STORY_PHOTO_ALT }}>
-      <p className="studio-page__quote">{STORY_LINE}</p>
-      {STORY_PORTRAIT_LINES.map((line) => <p key={line}>{line}</p>)}
-      <a className="studio-page__text-link" href="/our-approach/">
-        Discover our wedding planning approach <ArrowRight size={16} aria-hidden="true" />
-      </a>
-    </StudioIntro>
+    <>
+      <StudioIntro title={title} photo={{ src: STORY_PHOTO_URL, alt: STORY_PHOTO_ALT }}>
+        <p className="studio-page__quote">{STORY_LINE}</p>
+        {STORY_PORTRAIT_LINES.map((line) => <p key={line}>{line}</p>)}
+        <dl className="studio-page__facts">
+          <div><dt>Studio</dt><dd>Hyderabad, Telangana</dd></div>
+          <div><dt>Coverage</dt><dd>Hyderabad &amp; India</dd></div>
+        </dl>
+        <a className="studio-page__text-link" href="/our-approach/">
+          Discover our wedding planning approach <ArrowRight size={16} aria-hidden="true" />
+        </a>
+      </StudioIntro>
+      <section className="studio-page__section" aria-labelledby="about-questions">
+        <div className="ceremony-page__details" style={{ paddingTop: 0, paddingBottom: 0, borderBottom: 0 }}>
+          <div>
+            <h2 id="about-questions">Frequently asked questions</h2>
+            <p className="ceremony-page__lead">
+              Answers about our Hyderabad wedding planning studio, ceremonies, destination coverage, and consultations.
+            </p>
+            <a className="studio-page__text-link" href="/enquire/">
+              Request a wedding consultation <ArrowRight size={16} aria-hidden="true" />
+            </a>
+          </div>
+          <PlanningFaqAccordion />
+        </div>
+      </section>
+    </>
   );
 }
 

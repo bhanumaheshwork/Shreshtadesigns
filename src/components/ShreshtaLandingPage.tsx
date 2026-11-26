@@ -648,12 +648,12 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
       </header>
 
       <main id="main-content" tabIndex={-1}>
-        {/* 1 · Our Story */}
+        {/* 1 · About Us */}
         <section
           className="reflect overlap-sheet"
           id="our-story"
           data-nav="light"
-          aria-label="Our story"
+          aria-label="About us"
         >
           <div
             ref={stripRef}
@@ -668,7 +668,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
           </div>
           <div className="words">
             <div className="l rv">
-              <span className="cap">Our story</span>
+              <span className="cap">About us</span>
               {STORY_PORTRAIT_LINES.map((line) => <p key={line}>{line}</p>)}
             </div>
             <div aria-hidden="true" />
@@ -1009,7 +1009,7 @@ export const ShreshtaLandingPage: React.FC<ShreshtaLandingPageProps> = ({
           <div className="foot">
             <span>{BRAND_NAME} · Wedding Planners &amp; Designers in Hyderabad</span>
             <span>
-              <a href="/our-story/">About</a>
+              <a href="/our-story/">About us</a>
               <span aria-hidden="true"> · </span>
               <a href="/enquire/">Contact</a>
               <span aria-hidden="true"> · </span>

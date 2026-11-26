@@ -62,9 +62,11 @@ for (const path of paths) {
     ? ['HowTo', 'Organization', 'Service', 'WebPage', 'WebSite']
     : path === '/services/'
       ? ['BreadcrumbList', 'FAQPage', 'Organization', 'Service', 'WebPage', 'WebSite']
-      : path.startsWith('/album/')
-        ? ['BreadcrumbList', 'ImageGallery', 'Organization', 'WebPage', 'WebSite']
-        : ['BreadcrumbList', expectedWebPageType, 'Organization', 'WebSite'].sort();
+      : path === '/our-story/'
+        ? ['AboutPage', 'BreadcrumbList', 'FAQPage', 'Organization', 'WebSite']
+        : path.startsWith('/album/')
+          ? ['BreadcrumbList', 'ImageGallery', 'Organization', 'WebPage', 'WebSite']
+          : ['BreadcrumbList', expectedWebPageType, 'Organization', 'WebSite'].sort();
   assert.deepEqual(schemaTypes, expectedTypes, `${path} schema types`);
   for (const type of ['Organization', 'WebSite']) {
     const entity = schema['@graph'].find((entry) => entry['@type'] === type);

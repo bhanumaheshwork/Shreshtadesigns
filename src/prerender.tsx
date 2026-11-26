@@ -178,7 +178,7 @@ function schemaFor(page: SitePage) {
     });
   }
 
-  if (page.kind === 'services') {
+  if (page.kind === 'services' || (page.kind === 'studio' && page.link.id === 'our-story')) {
     graph.push({
       '@type': 'FAQPage',
       '@id': `${pageUrl}#faq`,
@@ -252,7 +252,7 @@ function markdownFor(page: SitePage): string {
   if (page.kind === 'home') {
     return [
       ...header,
-      '## Our Story',
+      '## About Us',
       '',
       STORY_LINE,
       ...STORY_PORTRAIT_LINES,
@@ -314,7 +314,15 @@ function markdownFor(page: SitePage): string {
   if (page.kind === 'studio') {
     const extra: string[] = [];
     if (page.link.id === 'our-story') {
-      extra.push(STORY_LINE, '', ...STORY_PORTRAIT_LINES);
+      extra.push(
+        STORY_LINE,
+        '',
+        ...STORY_PORTRAIT_LINES,
+        '',
+        '## Frequently Asked Questions',
+        '',
+        ...PLANNING_FAQS.flatMap((f) => [`### ${f.question}`, '', f.answer, '']),
+      );
     } else if (page.link.id === 'our-approach') {
       extra.push(...PROCESS_STAGES.map((s, i) => `${i + 1}. **${s.title}**: ${s.story}`));
     } else if (page.link.id === 'celebrations') {

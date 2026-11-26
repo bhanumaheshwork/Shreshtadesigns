@@ -253,6 +253,68 @@
   border-top: 1px solid var(--ceremony-rule);
 }
 
+.ceremony-faq {
+  border-top: 1px solid var(--ceremony-rule);
+}
+
+.ceremony-faq__item {
+  border-bottom: 1px solid var(--ceremony-rule);
+}
+
+.ceremony-faq__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ceremony-faq__trigger::-webkit-details-marker {
+  display: none;
+}
+
+.ceremony-faq__trigger h3,
+.services-page .ceremony-page__details .ceremony-faq__trigger h3 {
+  margin: 0;
+  font-family: var(--ceremony-serif);
+  font-size: clamp(19px, 1.65vw, 24px);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--ceremony-burgundy);
+}
+
+.ceremony-faq__icon {
+  flex-shrink: 0;
+  color: var(--ceremony-burgundy);
+  transition: transform 0.25s ease;
+}
+
+.ceremony-faq__item[open] .ceremony-faq__icon {
+  transform: rotate(45deg);
+}
+
+.ceremony-faq__trigger:hover h3 {
+  opacity: 0.78;
+}
+
+.ceremony-faq__answer {
+  margin: 0;
+  max-width: 62ch;
+  padding: 0 36px 22px 0;
+  color: var(--ceremony-muted);
+  font-size: 15.5px;
+  line-height: 1.68;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceremony-faq__icon {
+    transition: none;
+  }
+}
+
 @media (max-width: 719px) {
   .ceremony-page__nav {
     grid-template-columns: 1fr 1fr;
