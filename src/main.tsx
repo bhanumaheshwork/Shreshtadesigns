@@ -1,6 +1,5 @@
 import { createRoot, hydrateRoot } from 'react-dom/client';
-import { BRAND_NAME } from './data/brand';
-import { findPage, legacyPageHref } from './data/pages';
+import { findPage, formatPageTitle, legacyPageHref } from './data/pages';
 import { renderPage } from './renderPage';
 import { registerWebMcpTools } from './utils/webmcp';
 import './index.css';
@@ -22,7 +21,7 @@ function start() {
   if (root.hasChildNodes()) {
     hydrateRoot(root, content);
   } else {
-    document.title = `${page.title} | ${BRAND_NAME}`;
+    document.title = formatPageTitle(page);
     createRoot(root).render(content);
   }
 }

@@ -86,6 +86,11 @@ export const notFound = {
 
 export type SitePage = (typeof pages)[number] | typeof notFound;
 
+/** Put the brand first on the homepage so Google indexes the home URL for brand searches. */
+export function formatPageTitle(page: SitePage): string {
+  return page.kind === 'home' ? `${BRAND_NAME} | ${page.title}` : `${page.title} | ${BRAND_NAME}`;
+}
+
 export function findPage(path: string): SitePage {
   const normalized = path === '/' || path.endsWith('/') ? path : path + '/';
   return pages.find((page) => page.path === normalized) ?? notFound;

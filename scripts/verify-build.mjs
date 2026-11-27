@@ -18,7 +18,8 @@ const htmlByPath = new Map();
 function verifyBrand(path, page) {
   assert.doesNotMatch(page, /shreshtha|shrestha|rivaaz/i, `${path} has an outdated brand name`);
   const title = page.match(/<title>([^<]+)<\/title>/)?.[1];
-  assert.ok(title?.endsWith(` | ${brand}`), `${path} page title`);
+  const expectedTitle = path === '/' ? title?.startsWith(`${brand} | `) : title?.endsWith(` | ${brand}`);
+  assert.ok(expectedTitle, `${path} page title`);
   assert.ok(page.includes(`property="og:site_name" content="${brand}"`), `${path} social site name`);
   assert.ok(page.includes(`property="og:title" content="${title}"`), `${path} Open Graph title`);
   assert.ok(page.includes(`name="twitter:title" content="${title}"`), `${path} social card title`);

@@ -5,7 +5,7 @@ import { ServicesPage } from './components/ServicesPage';
 import { StudioPage } from './components/StudioPage';
 import { WhatsAppLink } from './components/WhatsAppLink';
 import { BRAND_LOGO_URL, BRAND_NAME } from './data/brand';
-import { SITE_ORIGIN, type SitePage } from './data/pages';
+import { formatPageTitle, SITE_ORIGIN, type SitePage } from './data/pages';
 import {
   getBrowserRoute,
   installRouter,
@@ -21,7 +21,7 @@ function setMetaTag(selector: string, content: string) {
 }
 
 function syncDocumentHead(page: SitePage) {
-  const fullTitle = `${page.title} | ${BRAND_NAME}`;
+  const fullTitle = formatPageTitle(page);
   const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
   const imageUrl = `${SITE_ORIGIN}${page.image}`;
 

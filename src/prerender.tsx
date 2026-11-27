@@ -11,7 +11,7 @@ import {
   BRAND_WHATSAPP_PROFILE_URL,
 } from './data/brand';
 import { CEREMONY_SLIDES } from './data/ceremonies';
-import { notFound, pages, SITE_ORIGIN, type SitePage } from './data/pages';
+import { formatPageTitle, notFound, pages, SITE_ORIGIN, type SitePage } from './data/pages';
 import { ceremonyAlbumHref, ceremonyServiceHref, SERVICES_HREF } from './data/siteNavigation';
 import { CONSULTATION_NOTE, PLANNING_FAQS, PROCESS_STAGES, STORY_LINE, STORY_PORTRAIT_LINES } from './data/studioContent';
 import { renderPage } from './renderPage';
@@ -58,7 +58,7 @@ function breadcrumbsFor(page: SitePage) {
 
 function schemaFor(page: SitePage) {
   const pageUrl = SITE_ORIGIN + page.path;
-  const pageTitle = `${page.title} | ${BRAND_NAME}`;
+  const pageTitle = formatPageTitle(page);
   const image = SITE_ORIGIN + page.image;
   const hyderabadArea = {
     '@type': 'City',
@@ -208,7 +208,7 @@ function schemaFor(page: SitePage) {
 }
 
 function pageHead(page: SitePage, staging: boolean) {
-  const title = `${page.title} | ${BRAND_NAME}`;
+  const title = formatPageTitle(page);
   const url = SITE_ORIGIN + page.path;
   const image = SITE_ORIGIN + page.image;
   const indexable = page.kind !== 'missing' && !staging;
@@ -238,7 +238,7 @@ function pageHead(page: SitePage, staging: boolean) {
 
 function markdownFor(page: SitePage): string {
   const header = [
-    `# ${page.title} | ${BRAND_NAME}`,
+    `# ${formatPageTitle(page)}`,
     '',
     `> ${page.description}`,
     '',
